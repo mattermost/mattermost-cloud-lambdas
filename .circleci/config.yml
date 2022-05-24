@@ -6,8 +6,8 @@ orbs:
 executors:
   default:
     docker:
-      - image: circleci/golang:1.16.6
-    working_directory: /go/src/github.com/mattermost/mattermost-cloud-lambdas
+      - image: cimg/go:1.18
+    working_directory: /home/circleci/go/src/github.com/mattermost/mattermost-cloud-lambdas
 
 jobs:
   push-lambda:
@@ -29,7 +29,7 @@ jobs:
             cd << parameters.lambda_function >>
             make
       - aws-s3/copy:
-          from: /go/src/github.com/mattermost/mattermost-cloud-lambdas/<< parameters.lambda_function >>/<< parameters.zip_file_name >>
+          from:  /home/circleci/go/src/github.com/mattermost/mattermost-cloud-lambdas/<< parameters.lambda_function >>/<< parameters.zip_file_name >>
           to: s3://<< parameters.bucket_name >>/mattermost-cloud/<< parameters.lambda_function >>/<< parameters.file_dir >>
           arguments: --acl public-read --cache-control "no-cache"
 
@@ -184,6 +184,16 @@ workflows:
             branches:
               only:
                 - main
+      - push-lambda:
+          file_dir: $(echo "${CIRCLE_BRANCH}" | sed 's/pull\//PR-/g')/
+          bucket_name: releases.mattermost.com
+          lambda_function: lambda-promtail
+          zip_file_name: build/output/_bin/main.zip
+          context: mattermost-release-s3
+          filters:
+            branches:
+              only:
+                - main
 
   push-branch:
     jobs:
@@ -316,6 +326,16 @@ workflows:
           file_dir: commit/${CIRCLE_SHA1}/
           bucket_name: pr-builds.mattermost.com
           lambda_function: elb-cleanup
+          zip_file_name: build/output/_bin/main.zip
+          context: mattermost-ci-pr-builds-s3
+          filters:
+            branches:
+              ignore:
+                - main
+      - push-lambda:
+          file_dir: commit/${CIRCLE_SHA1}/
+          bucket_name: pr-builds.mattermost.com
+          lambda_function: lambda-promtail
           zip_file_name: build/output/_bin/main.zip
           context: mattermost-ci-pr-builds-s3
           filters:
