@@ -168,7 +168,7 @@ workflows:
           file_dir: $(echo "${CIRCLE_BRANCH}" | sed 's/pull\//PR-/g')/
           bucket_name: releases.mattermost.com
           lambda_function: ebs-janitor
-          zip_file_name: build/output/_bin/main.zip
+          zip_file_name: main.zip
           context: mattermost-release-s3
           filters:
             branches:
@@ -178,7 +178,7 @@ workflows:
           file_dir: $(echo "${CIRCLE_BRANCH}" | sed 's/pull\//PR-/g')/
           bucket_name: releases.mattermost.com
           lambda_function: elb-cleanup
-          zip_file_name: build/output/_bin/main.zip
+          zip_file_name: main.zip
           context: mattermost-release-s3
           filters:
             branches:
@@ -316,7 +316,7 @@ workflows:
           file_dir: commit/${CIRCLE_SHA1}/
           bucket_name: pr-builds.mattermost.com
           lambda_function: ebs-janitor
-          zip_file_name: build/output/_bin/main.zip
+          zip_file_name: main.zip
           context: mattermost-ci-pr-builds-s3
           filters:
             branches:
@@ -326,7 +326,7 @@ workflows:
           file_dir: commit/${CIRCLE_SHA1}/
           bucket_name: pr-builds.mattermost.com
           lambda_function: elb-cleanup
-          zip_file_name: build/output/_bin/main.zip
+          zip_file_name: main.zip
           context: mattermost-ci-pr-builds-s3
           filters:
             branches:
