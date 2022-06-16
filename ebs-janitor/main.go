@@ -44,8 +44,8 @@ func main() {
 		return
 	}
 
-	dryRun := os.Getenv("dryrun")
-	if len(dryRun) > 0 && dryRun == "true" {
+	dryrun := os.Getenv("dryrun")
+	if len(dryrun) > 0 && dryrun == "true" {
 		log.Info("Running in a dry-run mode")
 		cfg.Debug = true
 	}
