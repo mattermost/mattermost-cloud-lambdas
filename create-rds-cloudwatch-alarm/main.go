@@ -58,22 +58,32 @@ func handler(ctx context.Context, event events.CloudWatchEvent) {
 
 		switch eventDetail.EventName {
 		case "CreateDBInstance":
-			// filtering the rds multitenant
-			if !strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "rds-cluster-multitenant-") {
+			// filtering the rds multitenant and test clusters
+			if !strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "rds-cluster-multitenant-") &&
+				!strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "test-") {
+
+				log.Infof("Creating CloudWatch Alarm for %s\n", eventDetail.RequestParameters.DBClusterIdentifier)
 				err := createCloudWatchAlarm(eventDetail.RequestParameters.DBClusterIdentifier)
 				if err != nil {
 					log.WithError(err).Errorln("Error creating the CloudWatch Alarm")
 					return
 				}
+			} else {
+				log.Infof("Skipping the creation of CloudWatch Alarm for %s\n", eventDetail.RequestParameters.DBClusterIdentifier)
 			}
 		case "DeleteDBInstance":
 			// filtering the rds multitenant
-			if !strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "rds-cluster-multitenant-") {
+			if !strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "rds-cluster-multitenant-") &&
+				!strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "test-") {
+
+				log.Infof("Deleting CloudWatch Alarm for %s\n", eventDetail.RequestParameters.DBClusterIdentifier)
 				err = deleteCloudWatchAlarm(eventDetail.ResponseElements.DBClusterIdentifier)
 				if err != nil {
 					log.WithError(err).Errorln("Error deleting the CloudWatch Alarm")
 					return
 				}
+			} else {
+				log.Infof("Skipping the deletion of CloudWatch Alarm for %s\n", eventDetail.RequestParameters.DBClusterIdentifier)
 			}
 		default:
 			log.Infof("Event did not match. Event = %s", eventDetail.EventName)
