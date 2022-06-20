@@ -43,6 +43,13 @@ func main() {
 		log.WithError(err).Error("failed initiate an AWS session")
 		return
 	}
+
+	dryrun := os.Getenv("dryrun")
+	if len(dryrun) > 0 && dryrun == "true" {
+		log.Info("Running in a dry-run mode")
+		cfg.Debug = true
+	}
+
 	// setup the handler
 	awsResourcer := NewClient(sess)
 	handler := NewEventHandler(cfg.ExpirationDays, awsResourcer, cfg.Debug, logger)

@@ -20,6 +20,9 @@ type config struct {
 
 // Validate makes sure that the config makes sense
 func (c *config) Validate() error {
+	if len(c.Region) == 0 {
+		return errors.New("AWS Region should be set & has a valid value")
+	}
 	return nil
 }
 
@@ -29,7 +32,7 @@ func init() {
 	viper.SetEnvPrefix("janitor")
 
 	defaults := map[string]interface{}{
-		"debug":           true,
+		"debug":           false,
 		"environment":     "dev",
 		"region":          "us-east-1",
 		"expiration_days": 90,
