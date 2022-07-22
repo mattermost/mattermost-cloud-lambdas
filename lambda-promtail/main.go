@@ -30,6 +30,7 @@ var (
 	writeAddress                                 *url.URL
 	username, password, extraLabelsRaw, tenantID string
 	keepStream                                   bool
+	includeMessageAsLabel                        bool
 	batchSize                                    int
 	s3Clients                                    map[string]*s3.Client
 	extraLabels                                  model.LabelSet
@@ -71,6 +72,13 @@ func setupArguments() {
 		keepStream = true
 	}
 	fmt.Println("keep stream: ", keepStream)
+
+	messageIncluded := os.Getenv("INCLUDE_MESSAGE")
+	// Anything other than case-insensitive 'true' is treated as 'false'.
+	if strings.EqualFold(messageIncluded, "true") {
+		includeMessageAsLabel = true
+	}
+	fmt.Println("Include Message As Label: ", includeMessageAsLabel)
 
 	batch := os.Getenv("BATCH_SIZE")
 	batchSize = 131072
