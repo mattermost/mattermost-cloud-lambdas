@@ -31,3 +31,4 @@ cloud-manager/bin/
 **/*.zip
 
 **/main
+.git/
