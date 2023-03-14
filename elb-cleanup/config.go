@@ -28,7 +28,7 @@ func (c *config) Validate() error {
 // Set the file name of the configurations file
 func init() {
 	viper.AutomaticEnv()
-	viper.SetEnvPrefix("elb-cleanup")
+	viper.SetEnvPrefix("elb_cleanup")
 
 	defaults := map[string]interface{}{
 		"debug":       false,
