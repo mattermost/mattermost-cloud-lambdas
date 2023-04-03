@@ -1,0 +1,30 @@
+name: Upload account-alerts to S3
+
+on:
+  push:
+    branches:
+      - main
+      - feat/CLD-5088
+
+jobs:
+  core-upload:
+    name: Upload account-alerts core function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build account-alerts zip
+        shell: bash
+        run: |
+          cd account-alerts
+          make
+
+      - name: Upload account-alerts
+        uses: shallwefootball/s3-upload-action@master
+        with:
+          aws_key_id: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: mattermost-cloud-lambdas
+          source_dir: main.zip
+          destination_dir: core/account-alerts/${{ github.ref_name }}/${{ github.run_number }}
