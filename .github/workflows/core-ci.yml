@@ -1,0 +1,95 @@
+name: Upload account-alerts to S3
+
+on:
+  push:
+    branches:
+      - main
+      - feat/CLD-5088
+
+jobs:
+  upload-account-alerts:
+    name: Upload account-alerts function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build account-alerts zip
+        shell: bash
+        run: |
+          cd account-alerts
+          make
+          mkdir -p zip/
+          mv main.zip zip/
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
+        id: extract_branch
+
+      - name: Upload core version to S3
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
+          SOURCE_DIR: 'account-alerts/zip'      # optional: defaults to entire repository
+          DEST_DIR: 'core/account-alerts/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}' # optional: defaults to root of bucket
+
+  upload-alert-elb:
+    name: Upload alert-elb-cloudwatch-alarm function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build alert-elb-cloudwatch-alarm zip
+        shell: bash
+        run: |
+          cd alert-elb-cloudwatch-alarm
+          make
+          mkdir -p zip/
+          mv main.zip zip/
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
+        id: extract_branch
+
+      - name: Upload core version to S3
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
+          SOURCE_DIR: 'alert-elb-cloudwatch-alarm/zip'      # optional: defaults to entire repository
+          DEST_DIR: 'core/alert-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}' # optional: defaults to root of bucket
+
+  upload-bind-network-attachment:
+    name: Upload bind-server-network-attachment function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build bind-server-network-attachment zip
+        shell: bash
+        run: |
+          cd bind-server-network-attachment
+          make
+          mkdir -p zip/
+          mv main.zip zip/
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
+        id: extract_branch
+
+      - name: Upload core version to S3
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
+          SOURCE_DIR: 'bind-server-network-attachment/zip'      # optional: defaults to entire repository
+          DEST_DIR: 'core/bind-server-network-attachment/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}' # optional: defaults to root of bucket
