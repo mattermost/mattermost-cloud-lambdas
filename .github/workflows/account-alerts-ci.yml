@@ -22,10 +22,16 @@ jobs:
           mkdir -p zip/
           mv main.zip zip/
 
-      - uses: jakejarvis/s3-sync-action@master
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
+        id: extract_branch
+
+      - name: Upload to S3
+        uses: jakejarvis/s3-sync-action@master
         env:
           AWS_S3_BUCKET: mattermost-cloud-lambdas
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'account-alerts/zip'      # optional: defaults to entire repository
-          DEST_DIR: 'core/account-alerts/${{ github.ref_name }}/${{ github.run_number }}' # optional: defaults to root of bucket
+          DEST_DIR: 'core/account-alerts/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}' # optional: defaults to root of bucket
