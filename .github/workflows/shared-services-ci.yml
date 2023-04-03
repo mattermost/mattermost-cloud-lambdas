@@ -92,7 +92,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'bind-server-network-attachment/zip'
-          DEST_DIR: 'shared-services/bind-server-network-attachment/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/bind-server-network-attachment/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-cloud-server-auth:
     name: Upload cloud-server-auth function to S3
@@ -121,7 +121,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'cloud-server-auth/zip'
-          DEST_DIR: 'shared-services/cloud-server-auth/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/cloud-server-auth/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-create-elb-cloudwatch-alarm:
     name: Upload create-elb-cloudwatch-alarm function to S3
@@ -150,7 +150,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'create-elb-cloudwatch-alarm/zip'
-          DEST_DIR: 'shared-services/create-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/create-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-create-rds-cloudwatch-alarm:
     name: Upload create-rds-cloudwatch-alarm function to S3
@@ -179,7 +179,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'create-rds-cloudwatch-alarm/zip'
-          DEST_DIR: 'shared-services/create-rds-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/create-rds-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-deckhand:
     name: Upload deckhand function to S3
@@ -208,7 +208,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'deckhand/zip'
-          DEST_DIR: 'shared-services/deckhand/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/deckhand/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-ebs-janitor:
     name: Upload ebs-janitor function to S3
@@ -237,7 +237,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'ebs-janitor/zip'
-          DEST_DIR: 'shared-services/ebs-janitor/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/ebs-janitor/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-elb-cleanup:
     name: Upload elb-cleanup function to S3
@@ -266,7 +266,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'elb-cleanup/zip'
-          DEST_DIR: 'shared-services/elb-cleanup/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/elb-cleanup/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-grafana-aws-metrics:
     name: Upload grafana-aws-metrics function to S3
@@ -295,7 +295,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'grafana-aws-metrics/zip'
-          DEST_DIR: 'shared-services/grafana-aws-metrics/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/grafana-aws-metrics/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-lambda-promtail:
     name: Upload lambda-promtail function to S3
@@ -324,7 +324,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'lambda-promtail/zip'
-          DEST_DIR: 'shared-services/lambda-promtail/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/lambda-promtail/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-logs-to-opensearch:
     name: Upload logs-to-opensearch function to S3
@@ -353,7 +353,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'logs-to-opensearch/zip'
-          DEST_DIR: 'shared-services/logs-to-opensearch/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/logs-to-opensearch/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
 
   upload-prometheus-dns-registration-service:
     name: Upload prometheus-dns-registration-service function to S3
@@ -382,4 +382,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'prometheus-dns-registration-service/zip'
-          DEST_DIR: 'shared-services/prometheus-dns-registration-service/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}'
+          DEST_DIR: 'shared-services/prometheus-dns-registration-service/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
