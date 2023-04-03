@@ -22,11 +22,10 @@ jobs:
           mkdir -p zip/
           mv main.zip zip/
 
-      - name: Upload account-alerts
-        uses: shallwefootball/s3-upload-action@master
-        with:
-          aws_key_id: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
-          aws_bucket: mattermost-cloud-lambdas
-          source_dir: account-alerts/zip
-          destination_dir: core/account-alerts/${{ github.ref_name }}/${{ github.run_number }}
+      - uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
+          SOURCE_DIR: 'account-alerts/zip'      # optional: defaults to entire repository
+          DEST_DIR: 'core/account-alerts/${{ github.ref_name }}/${{ github.run_number }}' # optional: defaults to root of bucket
