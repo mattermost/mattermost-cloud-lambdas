@@ -26,5 +26,5 @@ jobs:
           aws_key_id: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           aws_bucket: mattermost-cloud-lambdas
-          source_dir: main.zip
+          source_dir: account-alerts/main.zip
           destination_dir: core/account-alerts/${{ github.ref_name }}/${{ github.run_number }}
