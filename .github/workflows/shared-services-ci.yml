@@ -34,7 +34,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'account-alerts/zip'
-          DEST_DIR: 'shared-services/account-alerts/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}'
+          DEST_DIR: 'shared-services/account-alerts/${{ steps.extract_branch.outputs.branch }}/${{ github.github.run_id }}'
 
   upload-alert-elb:
     name: Upload alert-elb-cloudwatch-alarm function to S3
@@ -63,7 +63,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'alert-elb-cloudwatch-alarm/zip'
-          DEST_DIR: 'shared-services/alert-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}'
+          DEST_DIR: 'shared-services/alert-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ github.github.run_id }}'
 
   upload-bind-network-attachment:
     name: Upload bind-server-network-attachment function to S3
