@@ -383,4 +383,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'prometheus-dns-registration-service/zip'
           DEST_DIR: 'core/prometheus-dns-registration-service/${{ steps.extract_branch.outputs.branch }}/${{ github.run_id }}'
-
