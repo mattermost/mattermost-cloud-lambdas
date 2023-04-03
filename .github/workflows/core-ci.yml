@@ -30,7 +30,7 @@ jobs:
       - name: Upload core version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'account-alerts/zip'      # optional: defaults to entire repository
@@ -59,7 +59,7 @@ jobs:
       - name: Upload core version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'alert-elb-cloudwatch-alarm/zip'      # optional: defaults to entire repository
@@ -88,8 +88,8 @@ jobs:
       - name: Upload core version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'bind-server-network-attachment/zip'      # optional: defaults to entire repository
-          DEST_DIR: 'core/bind-server-network-attachment/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}' # optional: defaults to root of bucket
+          DEST_DIR: 'core/bind-server-network-attachment/${{ steps.extract_branch.outputs.branch }}/${{ github.run_attempt }}' # optional: defaults to root of bucket
