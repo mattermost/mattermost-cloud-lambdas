@@ -19,7 +19,9 @@ jobs:
         run: |
           cd account-alerts
           make
-          ls /home/runner/work/mattermost-cloud-lambdas/
+          pwd
+          ls /home/runner/work/mattermost-cloud-lambdas/mattermost-cloud-lambdas
+          ls /home/runner/work/mattermost-cloud-lambdas/mattermost-cloud-lambdas/account-alerts/
 
       - name: Upload account-alerts
         uses: shallwefootball/s3-upload-action@master
