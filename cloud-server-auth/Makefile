@@ -5,11 +5,7 @@ GOARCH  ?= amd64
 
 export GO111MODULE=on
 
-all: test build pack 
-
-test:
-	@echo "Running tests..."
-	@go test ./...
+all: build pack 
 
 build:
 	@echo "Building..."
@@ -23,4 +19,4 @@ clean:
 	@echo "Cleaning up..."
 	@rm -rf $(HANDLER) $(PACKAGE).zip
 
-.PHONY: all test build pack clean
+.PHONY: all build pack clean

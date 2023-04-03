@@ -20,7 +20,7 @@ jobs:
           cd account-alerts
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -30,7 +30,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'account-alerts/zip'
@@ -49,7 +49,7 @@ jobs:
           cd alert-elb-cloudwatch-alarm
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -59,7 +59,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'alert-elb-cloudwatch-alarm/zip'
@@ -78,7 +78,7 @@ jobs:
           cd bind-server-network-attachment
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -88,7 +88,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'bind-server-network-attachment/zip'
@@ -107,7 +107,7 @@ jobs:
           cd cloud-server-auth
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -117,7 +117,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'cloud-server-auth/zip'
@@ -136,7 +136,7 @@ jobs:
           cd create-elb-cloudwatch-alarm
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -146,7 +146,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'create-elb-cloudwatch-alarm/zip'
@@ -165,7 +165,7 @@ jobs:
           cd create-rds-cloudwatch-alarm
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -175,7 +175,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'create-rds-cloudwatch-alarm/zip'
@@ -194,7 +194,7 @@ jobs:
           cd deckhand
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -204,7 +204,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'deckhand/zip'
@@ -223,7 +223,7 @@ jobs:
           cd ebs-janitor
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -233,7 +233,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'ebs-janitor/zip'
@@ -252,7 +252,7 @@ jobs:
           cd elb-cleanup
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -262,7 +262,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'elb-cleanup/zip'
@@ -281,7 +281,7 @@ jobs:
           cd grafana-aws-metrics
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -291,7 +291,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'grafana-aws-metrics/zip'
@@ -310,7 +310,7 @@ jobs:
           cd lambda-promtail
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -320,7 +320,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'lambda-promtail/zip'
@@ -339,7 +339,7 @@ jobs:
           cd logs-to-opensearch
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -349,7 +349,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'logs-to-opensearch/zip'
@@ -368,7 +368,7 @@ jobs:
           cd prometheus-dns-registration-service
           make
           mkdir -p zip/
-          mv main.zip zip/
+          mv *.zip zip/
 
       - name: Extract branch name
         shell: bash
@@ -378,7 +378,7 @@ jobs:
       - name: Upload shared-services version to S3
         uses: jakejarvis/s3-sync-action@master
         env:
-          AWS_S3_BUCKET: mattermost-cloud-lambdas-shared-services
+          AWS_S3_BUCKET: mattermost-cloud-lambdas-core
           AWS_ACCESS_KEY_ID: ${{ secrets.LAMBDAS_AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LAMBDAS_AWS_SECRET_ACCESS_KEY}}
           SOURCE_DIR: 'prometheus-dns-registration-service/zip'
