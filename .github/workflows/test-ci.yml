@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/CLD-5088
 
 jobs:
   upload-test-lambdas:
