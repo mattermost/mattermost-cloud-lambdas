@@ -1,0 +1,35 @@
+name: upload-lambda-action
+description: Reusable action to upload Lambdas to S3
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build $LAMBDA_NAME zip
+      shell: bash
+      run: |
+        cd $LAMBDA_NAME
+        make
+        mkdir -p zip/
+        mv *.zip zip/
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
+      id: extract_branch
+
+    - name: Set current date as env variable
+      id: date
+      shell: bash
+      run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
+
+    - name: Upload test version to S3
+      uses: jakejarvis/s3-sync-action@master
+      env:
+        AWS_S3_BUCKET: mattermost-cloud-lambdas-$ENVIRONMENT
+        AWS_ACCESS_KEY_ID: $AWS_KEY_ID
+        AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+        SOURCE_DIR: '$LAMBDA_NAME/zip'
+        DEST_DIR: '$LAMBDA_NAME/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
