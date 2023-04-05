@@ -25,7 +25,7 @@ jobs:
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           LAMBDA_NAME: account-alerts
-          AWS_KEY_ID: ${{ secrets.aws_key_id }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
   #     - name: Build account-alerts zip

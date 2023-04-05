@@ -7,7 +7,7 @@ runs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Build $LAMBDA_NAME zip
+    - name: Build ${{ env.LAMBDA_NAME }} zip
       shell: bash
       run: |
         cd $LAMBDA_NAME
@@ -28,8 +28,8 @@ runs:
     - name: Upload test version to S3
       uses: jakejarvis/s3-sync-action@master
       env:
-        AWS_S3_BUCKET: mattermost-cloud-lambdas-$ENVIRONMENT
-        AWS_ACCESS_KEY_ID: $AWS_KEY_ID
-        AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-        SOURCE_DIR: '$LAMBDA_NAME/zip'
-        DEST_DIR: '$LAMBDA_NAME/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+        AWS_S3_BUCKET: 'mattermost-cloud-lambdas-${{ env.ENVIRONMENT }}'
+        AWS_ACCESS_KEY_ID: '${{ env.AWS_ACCESS_KEY_ID }}'
+        AWS_SECRET_ACCESS_KEY: '${{ env.AWS_SECRET_ACCESS_KEY }}'
+        SOURCE_DIR: '${{ env.LAMBDA_NAME }}/zip'
+        DEST_DIR: '${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
