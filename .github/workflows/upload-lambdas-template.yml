@@ -7,7 +7,7 @@ on:
         required: true
         type: string
     secrets:
-      aws_key_id:
+      aws_access_key_id:
         required: true
       aws_secret_access_key:
         required: true
@@ -25,440 +25,200 @@ jobs:
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           LAMBDA_NAME: account-alerts
-          AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Build account-alerts zip
-  #       shell: bash
-  #       run: |
-  #         cd account-alerts
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
+  upload-alert-elb-cloudwatch-alarm:
+    name: Upload alert-elb-cloudwatch-alarm function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: alert-elb-cloudwatch-alarm
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
+  upload-bind-server-network-attachment:
+    name: Upload bind-server-network-attachment function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'account-alerts/zip'
-  #         DEST_DIR: 'account-alerts/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: bind-server-network-attachment
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  # upload-alert-elb:
-  #   name: Upload alert-elb-cloudwatch-alarm function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+  upload-cloud-server-auth:
+    name: Upload cloud-server-auth function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Build alert-elb-cloudwatch-alarm zip
-  #       shell: bash
-  #       run: |
-  #         cd alert-elb-cloudwatch-alarm
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: cloud-server-auth
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
+  upload-create-elb-cloudwatch-alarm:
+    name: Upload create-elb-cloudwatch-alarm function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: create-elb-cloudwatch-alarm
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'alert-elb-cloudwatch-alarm/zip'
-  #         DEST_DIR: 'alert-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+  upload-create-rds-cloudwatch-alarm:
+    name: Upload create-rds-cloudwatch-alarm function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  # upload-bind-network-attachment:
-  #   name: Upload bind-server-network-attachment function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: create-rds-cloudwatch-alarm
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Build bind-server-network-attachment zip
-  #       shell: bash
-  #       run: |
-  #         cd bind-server-network-attachment
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
+  upload-deckhand:
+    name: Upload deckhand function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: deckhand
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
+  upload-ebs-janitor:
+    name: Upload ebs-janitor function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'bind-server-network-attachment/zip'
-  #         DEST_DIR: 'bind-server-network-attachment/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: ebs-janitor
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  # upload-cloud-server-auth:
-  #   name: Upload cloud-server-auth function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+  upload-elb-cleanup:
+    name: Upload elb-cleanup function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Build cloud-server-auth zip
-  #       shell: bash
-  #       run: |
-  #         cd cloud-server-auth
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: elb-cleanup
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
+  upload-grafana-aws-metrics:
+    name: Upload grafana-aws-metrics function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: grafana-aws-metrics
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'cloud-server-auth/zip'
-  #         DEST_DIR: 'cloud-server-auth/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+  upload-lambda-promtail:
+    name: Upload lambda-promtail function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  # upload-create-elb-cloudwatch-alarm:
-  #   name: Upload create-elb-cloudwatch-alarm function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: lambda-promtail
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Build create-elb-cloudwatch-alarm zip
-  #       shell: bash
-  #       run: |
-  #         cd create-elb-cloudwatch-alarm
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
+  upload-logs-to-opensearch:
+    name: Upload logs-to-opensearch function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: logs-to-opensearch
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
+  upload-prometheus-dns-registration-service:
+    name: Upload prometheus-dns-registration-service function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'create-elb-cloudwatch-alarm/zip'
-  #         DEST_DIR: 'create-elb-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: prometheus-dns-registration-service
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
 
-  # upload-create-rds-cloudwatch-alarm:
-  #   name: Upload create-rds-cloudwatch-alarm function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+  upload-rds-cluster-events:
+    name: Upload rds-cluster-events function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Build create-rds-cloudwatch-alarm zip
-  #       shell: bash
-  #       run: |
-  #         cd create-rds-cloudwatch-alarm
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'create-rds-cloudwatch-alarm/zip'
-  #         DEST_DIR: 'create-rds-cloudwatch-alarm/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-deckhand:
-  #   name: Upload deckhand function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build deckhand zip
-  #       shell: bash
-  #       run: |
-  #         cd deckhand
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'deckhand/zip'
-  #         DEST_DIR: 'deckhand/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-ebs-janitor:
-  #   name: Upload ebs-janitor function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build ebs-janitor zip
-  #       shell: bash
-  #       run: |
-  #         cd ebs-janitor
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'ebs-janitor/zip'
-  #         DEST_DIR: 'ebs-janitor/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-elb-cleanup:
-  #   name: Upload elb-cleanup function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build elb-cleanup zip
-  #       shell: bash
-  #       run: |
-  #         cd elb-cleanup
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'elb-cleanup/zip'
-  #         DEST_DIR: 'elb-cleanup/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-grafana-aws-metrics:
-  #   name: Upload grafana-aws-metrics function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build grafana-aws-metrics zip
-  #       shell: bash
-  #       run: |
-  #         cd grafana-aws-metrics
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'grafana-aws-metrics/zip'
-  #         DEST_DIR: 'grafana-aws-metrics/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-lambda-promtail:
-  #   name: Upload lambda-promtail function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build lambda-promtail zip
-  #       shell: bash
-  #       run: |
-  #         cd lambda-promtail
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'lambda-promtail/zip'
-  #         DEST_DIR: 'lambda-promtail/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-logs-to-opensearch:
-  #   name: Upload logs-to-opensearch function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build logs-to-opensearch zip
-  #       shell: bash
-  #       run: |
-  #         cd logs-to-opensearch
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'logs-to-opensearch/zip'
-  #         DEST_DIR: 'logs-to-opensearch/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
-
-  # upload-prometheus-dns-registration-service:
-  #   name: Upload prometheus-dns-registration-service function to S3
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Build prometheus-dns-registration-service zip
-  #       shell: bash
-  #       run: |
-  #         cd prometheus-dns-registration-service
-  #         make
-  #         mkdir -p zip/
-  #         mv *.zip zip/
-
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
-  #       id: extract_branch
-
-  #     - name: Set current date as env variable
-  #       id: date
-  #       shell: bash
-  #       run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
-  #     - name: Upload test version to S3
-  #       uses: jakejarvis/s3-sync-action@master
-  #       env:
-  #         AWS_S3_BUCKET: mattermost-cloud-lambdas-${{ inputs.environment }}
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.aws_key_id }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-  #         SOURCE_DIR: 'prometheus-dns-registration-service/zip'
-  #         DEST_DIR: 'prometheus-dns-registration-service/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: rds-cluster-events
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}

@@ -11,5 +11,5 @@ jobs:
     with:
       environment: shared-services
     secrets:
-      aws_key_id: ${{ secrets.SHARED_SERVICES_LAMBDA_AWS_KEY_ID }}
+      aws_access_key_id: ${{ secrets.SHARED_SERVICES_LAMBDA_AWS_KEY_ID }}
       aws_secret_access_key: ${{ secrets.SHARED_SERVICES_LAMBDA_AWS_SECRET_ACCESS_KEY }}

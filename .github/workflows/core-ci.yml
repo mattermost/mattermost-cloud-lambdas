@@ -12,5 +12,5 @@ jobs:
     with:
       environment: core
     secrets:
-      aws_key_id: ${{ secrets.CORE_LAMBDA_AWS_KEY_ID }}
+      aws_access_key_id: ${{ secrets.CORE_LAMBDA_AWS_KEY_ID }}
       aws_secret_access_key: ${{ secrets.CORE_LAMBDA_AWS_SECRET_ACCESS_KEY }}
