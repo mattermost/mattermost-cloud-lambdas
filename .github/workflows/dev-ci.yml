@@ -1,0 +1,15 @@
+name: Upload lambdas to S3 for dev
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  upload-dev-lambdas:
+    uses: ./.github/workflows/upload-lambdas-template.yml
+    with:
+      environment: dev
+    secrets:
+      aws_access_key_id: ${{ secrets.DEV_LAMBDA_AWS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.DEV_LAMBDA_AWS_SECRET_ACCESS_KEY }}
