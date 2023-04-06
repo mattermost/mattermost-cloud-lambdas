@@ -20,11 +20,6 @@ runs:
       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
       id: extract_branch
 
-    - name: Set current date as env variable
-      id: date
-      shell: bash
-      run: echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >>$GITHUB_OUTPUT
-
     - name: Upload test version to S3
       uses: jakejarvis/s3-sync-action@master
       env:
@@ -32,4 +27,4 @@ runs:
         AWS_ACCESS_KEY_ID: '${{ env.AWS_ACCESS_KEY_ID }}'
         AWS_SECRET_ACCESS_KEY: '${{ env.AWS_SECRET_ACCESS_KEY }}'
         SOURCE_DIR: '${{ env.LAMBDA_NAME }}/zip'
-        DEST_DIR: '${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ steps.date.outputs.now }}'
+        DEST_DIR: '${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}'
