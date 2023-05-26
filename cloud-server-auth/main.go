@@ -100,6 +100,10 @@ func isAuthorized(url *url.URL) bool {
 		"/api/installation",
 		"api/cluster_installation",
 		"/api/cluster_installation",
+		"api/webhooks",
+		"/api/webhooks",
+		"/api/webhook",
+		"api/webhook",
 	}
 
 	for _, prefix := range validPrefixes {
