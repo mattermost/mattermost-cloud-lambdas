@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -108,6 +109,18 @@ func isAuthorized(url *url.URL) bool {
 
 	for _, prefix := range validPrefixes {
 		if strings.HasPrefix(url.EscapedPath(), prefix) {
+			return true
+		}
+	}
+
+	// These endpoints require an exact match, so the cloud plugin can talk to some but not all security endpoints.
+	exactMatchRegexes := []string{
+		"^/api/security/installation/[a-zA-Z0-9]{26}/deletion/lock$",
+		"^/api/security/installation/[a-zA-Z0-9]{26}/deletion/unlock$",
+	}
+
+	for _, regex := range exactMatchRegexes {
+		if matched, _ := regexp.MatchString(regex, url.EscapedPath()); matched {
 			return true
 		}
 	}
