@@ -9,7 +9,7 @@ all: build pack
 
 build:
 	@echo "Building..."
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags='-w -s' -o $(HANDLER)
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags='-w -s' -o $(HANDLER)
 
 pack: build
 	@echo "Packing binary..."
