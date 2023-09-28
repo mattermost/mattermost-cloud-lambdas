@@ -1,0 +1,15 @@
+name: Upload lambdas to S3 for data engineering
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  upload-data-engineering-lambdas:
+    uses: ./.github/workflows/upload-lambdas-template.yml
+    with:
+      environment: data-engineering
+    secrets:
+      aws_access_key_id: ${{ secrets.DATA_ENGINEERING_LAMBDA_AWS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.DATA_ENGINEERING_LAMBDA_AWS_SECRET_ACCESS_KEY }}
