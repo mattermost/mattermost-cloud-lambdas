@@ -22,26 +22,27 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler() {
+func handler() error {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("REGION"))},
 	)
 	if err != nil {
 		log.WithError(err).Error("AWS Session failed.")
-		return
+		return err
 	}
 	svc := ec2.New(sess)
 	uniqueUsedImages, err := getUniqueUsedImages(svc)
 	if err != nil {
 		log.WithError(err).Error("Failed to get Unique Used AMIs.")
-		return
+		return err
 	}
 	err = deleteAMIs(svc, uniqueUsedImages)
 
 	if err != nil {
 		log.WithError(err).Error("Failed to delete AMIs.")
-		return
+		return err
 	}
+	return nil
 }
 
 func deleteAMIs(svc *ec2.EC2, uniqueUsedImages []string) error {
