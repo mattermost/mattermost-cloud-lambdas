@@ -16,12 +16,13 @@ build:
 
 fetch-bootstrap:
 	@echo "Fetching custom Go runtime bootstrap..."
-	@curl -LO https://github.com/aws/aws-lambda-go/releases/download/v1.13.3/aws-lambda-go
-	@chmod +x aws-lambda-go
+	@LATEST_RELEASE=$(shell curl -s https://api.github.com/repos/aws/aws-lambda-go/releases/latest | jq -r .tag_name) && \
+	curl -Lo bootstrap https://github.com/aws/aws-lambda-go/releases/download/$$LATEST_RELEASE/bootstrap && \
+	chmod +x bootstrap
 
 pack:
 	@echo "Packing binary and bootstrap..."
-	@zip $(PACKAGE).zip $(HANDLER) aws-lambda-go
+	@zip $(PACKAGE).zip $(HANDLER) bootstrap
 
 clean:
 	@echo "Cleaning up..."
