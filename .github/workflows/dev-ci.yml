@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
-
+  pull_request:
+    branches:
+      - main
 jobs:
   upload-dev-lambdas:
     uses: ./.github/workflows/upload-lambdas-template.yml
