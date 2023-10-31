@@ -1,5 +1,5 @@
 # Golang
-HANDLER ?= main
+HANDLER ?= bootstrap
 PACKAGE ?= $(HANDLER)
 GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
@@ -21,7 +21,7 @@ all: build dist
 ## build: Builds a linux binary
 build:
 	@echo "Building..."
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build ${LDFLAGS} -o $(HANDLER)
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build ${LDFLAGS} -o $(HANDLER) .
 
 .PHONY: clean
 ## clean: Run golangci-lint on codebase

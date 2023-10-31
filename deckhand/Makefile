@@ -13,7 +13,7 @@ all: build pack
 
 build:
 	@echo "Building..."
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags='-w -s' -o $(HANDLER) main.go
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags='-w -s' -o $(HANDLER) .
 
 pack:
 	@echo "Packing binary..."
