@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//  BuildVersion the version which lambda is running
+// BuildVersion the version which lambda is running
 var BuildVersion = ""
 
 // BuildTime the time of build created
