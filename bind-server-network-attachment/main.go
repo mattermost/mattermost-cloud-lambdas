@@ -1,3 +1,8 @@
+// Package main implements an AWS Lambda function designed for lifecycle management of
+// Bind servers on EC2 instances within an Auto Scaling group. It responds to EC2 Instance-launch Lifecycle Actions,
+// attaching a pre-defined network interface to new instances based on specific VPC and subnet IDs.
+// The function ensures that the lifecycle hooks are correctly processed, facilitating the setup of Bind servers
+// by automating the network interface attachment and handling success or failure of the launch events accordingly.
 package main
 
 import (
@@ -18,7 +23,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, autoScalingEvent events.AutoScalingEvent) {
+func handler(_ context.Context, autoScalingEvent events.AutoScalingEvent) {
 	if autoScalingEvent.DetailType == "EC2 Instance-launch Lifecycle Action" {
 		instanceID := autoScalingEvent.Detail["EC2InstanceId"].(string)
 		lifecycleHookName := autoScalingEvent.Detail["LifecycleHookName"].(string)

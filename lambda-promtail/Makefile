@@ -67,7 +67,6 @@ lint:
 	fi; \
 
 	@echo Running golangci-lint
-    GOROOT=$(go env GOROOT)
 	golangci-lint run ./...
 
 .PHONY: test
