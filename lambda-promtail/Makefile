@@ -35,6 +35,11 @@ dist:
 	@echo "Packing binary..."
 	@zip $(PACKAGE).zip $(HANDLER)
 
+.PHONY: update-modules
+update-modules:
+	go get -u ./...
+	go mod tidy
+
 .PHONY: fmt
 ## fmt: Run go fmt on codebase
 fmt:
@@ -62,6 +67,7 @@ lint:
 	fi; \
 
 	@echo Running golangci-lint
+    GOROOT=$(go env GOROOT)
 	golangci-lint run ./...
 
 .PHONY: test

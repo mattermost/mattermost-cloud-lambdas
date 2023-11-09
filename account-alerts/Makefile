@@ -19,8 +19,41 @@ pack:
 	@echo "Packing binary..."
 	@zip $(PACKAGE).zip $(HANDLER)
 
+update-modules:
+	go get -u ./...
+	go mod tidy
+
+.PHONY: fmt
+## fmt: Run go fmt on codebase
+fmt:
+	@echo Checking if code is formatted
+		files=$$(go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}' .); \
+		if [ "$$files" ]; then \
+			gofmt_output=$$(gofmt -d -s $$files 2>&1); \
+			if [ "$$gofmt_output" ]; then \
+				echo "$$gofmt_output"; \
+				echo "gofmt failed"; \
+				echo "To fix it, run:"; \
+				echo "go fmt [FILE]"; \
+				exit 1; \
+			fi; \
+		fi; \
+	  echo "gofmt success"; \
+
+.PHONY: lint
+## lint: Run golangci-lint on codebase
+lint:
+	@echo "Linting..."
+	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
+		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install for installation instructions."; \
+		exit 1; \
+	fi; \
+
+	@echo Running golangci-lint
+	golangci-lint run ./...
+
 clean:
 	@echo "Cleaning up..."
 	@rm -rf $(HANDLER) $(PACKAGE).zip
 
-.PHONY: all dep build pack clean
+.PHONY: all build pack clean update-modules

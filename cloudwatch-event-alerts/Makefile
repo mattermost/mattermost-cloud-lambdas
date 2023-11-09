@@ -19,8 +19,12 @@ pack:
 	@echo "Packing binary..."
 	@zip $(PACKAGE).zip $(HANDLER)
 
+update-modules:
+	go get -u ./...
+	go mod tidy
+
 clean:
 	@echo "Cleaning up..."
 	@rm -rf $(HANDLER) $(PACKAGE).zip
 
-.PHONY: all dep build pack clean
+.PHONY: all build pack clean update-modules

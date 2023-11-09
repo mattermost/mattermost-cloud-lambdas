@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,10 +18,28 @@ import (
 )
 
 const (
-	cloudServerEnv       = "CLOUD_SERVER"
-	mattermostWebhookEnv = "MATTERMOST_WEBHOOK"
-
+	cloudServerEnv           = "CLOUD_SERVER"
+	mattermostWebhookEnv     = "MATTERMOST_WEBHOOK"
 	mattermostWebhookIconURL = "https://images2.minutemediacdn.com/image/upload/c_fill,g_auto,h_1248,w_2220/f_auto,q_auto,w_1100/v1555925520/shape/mentalfloss/800px-princesslineup.jpg"
+)
+
+var (
+	cloudServerURL       string
+	mattermostWebhookURL string
+	validPrefixes        = []string{
+		"api/installation",
+		"/api/installation",
+		"api/cluster_installation",
+		"/api/cluster_installation",
+		"api/webhooks",
+		"/api/webhooks",
+		"/api/webhook",
+		"api/webhook",
+	}
+	exactMatchRegexes = compileRegexes([]string{
+		`^/api/security/installation/[a-zA-Z0-9]{26}/deletion/lock$`,
+		`^/api/security/installation/[a-zA-Z0-9]{26}/deletion/unlock$`,
+	})
 )
 
 type errorResponse struct {
@@ -32,6 +50,20 @@ type webhookRequest struct {
 	Username string `json:"username"`
 	Text     string `json:"text"`
 	IconURL  string `json:"icon_url"`
+}
+
+func init() {
+	cloudServerURL = getEnv(cloudServerEnv)
+	mattermostWebhookURL = getEnv(mattermostWebhookEnv)
+
+	// Configure logging
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	if os.Getenv("AWS_EXECUTION_ENV") == "" {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
 }
 
 func validateCloudRequest(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -81,7 +113,7 @@ func validateCloudRequest(request events.APIGatewayProxyRequest) (events.APIGate
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return processFailedAuth(request, http.StatusInternalServerError, errors.Wrap(err, "failed to read cloud server response body"))
 	}
@@ -190,4 +222,24 @@ func sendToWebhook(request events.APIGatewayProxyRequest, err error) error {
 
 func main() {
 	lambda.Start(validateCloudRequest)
+}
+
+func compileRegexes(expressions []string) []*regexp.Regexp {
+	var regexes []*regexp.Regexp
+	for _, expr := range expressions {
+		r, err := regexp.Compile(expr)
+		if err != nil {
+			log.Fatalf("Failed to compile regex: %v", err)
+		}
+		regexes = append(regexes, r)
+	}
+	return regexes
+}
+
+func getEnv(env string) string {
+	value := os.Getenv(env)
+	if value == "" {
+		log.Fatalf("Environment variable %s is not set", env)
+	}
+	return value
 }

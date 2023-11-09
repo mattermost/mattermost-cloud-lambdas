@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubernetes-sigs/aws-iam-authenticator/pkg/token"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"sigs.k8s.io/aws-iam-authenticator/pkg/token"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

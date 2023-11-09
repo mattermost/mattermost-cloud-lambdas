@@ -78,31 +78,37 @@ func handler(ctx context.Context, event events.CloudWatchEvent) {
 			// If DNSName is nil it is not an classic loadBalancer
 			if eventDetail.ResponseElements.DNSName == "" {
 				// extract the app/carlos-test/a83437a362089b8f from arn:aws:elasticloadbalancing:us-east-1:XXXXX:loadbalancer/app/carlos-test/a83437a362089b8f
-				elbArnName := eventDetail.ResponseElements.LoadBalancers[0].LoadBalancerArn
-				elbName = elbArnName[strings.IndexByte(elbArnName, '/')+1:]
-				targetGroupName, err = getTargetGroup(elbArnName)
-				if err != nil {
-					log.WithError(err).Errorf("Error getting the targetgroup for lb %s", elbName)
+				if len(eventDetail.ResponseElements.LoadBalancers) > 0 {
+					elbArnName := eventDetail.ResponseElements.LoadBalancers[0].LoadBalancerArn
+					elbName = elbArnName[strings.IndexByte(elbArnName, '/')+1:]
+					targetGroupName, err = getTargetGroup(elbArnName)
+					if err != nil {
+						log.WithError(err).Errorf("Error getting the targetgroup for lb %s", elbName)
+						return
+					}
+
+					lb, err := getV2LB(elbArnName)
+					if err != nil {
+						log.WithError(err).Errorf("failed to get %s information", elbName)
+						return
+					}
+
+					if len(lb) <= 0 {
+						log.Errorf("should return the LB information for %s", elbName)
+						return
+					}
+
+					if len(lb) > 2 {
+						log.Errorf("should return only one lb for %s", elbName)
+						return
+					}
+
+					elbType = *lb[0].Type
+				} else {
+					// Handle the error, maybe the data is not there or the slice was not initialized
+					log.Error("No LoadBalancers found in the event detail")
 					return
 				}
-
-				lb, err := getV2LB(elbArnName)
-				if err != nil {
-					log.WithError(err).Errorf("failed to get %s information", elbName)
-					return
-				}
-
-				if len(lb) <= 0 {
-					log.Errorf("should return the LB information for %s", elbName)
-					return
-				}
-
-				if len(lb) > 2 {
-					log.Errorf("should return only one lb for %s", elbName)
-					return
-				}
-
-				elbType = *lb[0].Type
 			} else {
 				elbName = eventDetail.RequestParameters.LoadBalancerName
 			}

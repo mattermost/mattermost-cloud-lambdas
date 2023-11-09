@@ -1,6 +1,6 @@
-module github.com/mattermost/mattermost-cloud-monitoring/create-rds-cloudwatch-alarm
+module github.com/mattermost/mattermost-cloud-lambdas/create-rds-cloudwatch-alarm
 
-go 1.14
+go 1.21
 
 require (
 	github.com/aws/aws-lambda-go v1.17.0
