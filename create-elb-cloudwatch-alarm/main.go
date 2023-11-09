@@ -1,3 +1,6 @@
+// Package main provides functionality to handle CloudWatch events and manage CloudWatch Alarms
+// for Elastic Load Balancers (ELBs) within AWS. It processes events, creates or deletes alarms,
+// and interfaces with other AWS services as needed.
 package main
 
 import (
@@ -18,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
+// Detail includes the relevant data from a CloudWatch event for processing.
 type Detail struct {
 	UserIdentity      UserIdentity      `json:"userIdentity"`
 	EventSource       string            `json:"eventSource"`
@@ -27,12 +31,14 @@ type Detail struct {
 	ResponseElements  ResponseElements  `json:"responseElements"`
 }
 
+// UserIdentity represents the identity of the user that initiated the event.
 type UserIdentity struct {
 	Arn       string `json:"arn"`
 	AccountID string `json:"accountId"`
 	InvokedBy string `json:"invokedBy"`
 }
 
+// RequestParameters holds the parameters used in the request that generated the event.
 type RequestParameters struct {
 	SecurityGroups []string `json:"securityGroups"`
 	Name           string   `json:"name,omitempty"`
@@ -43,12 +49,14 @@ type RequestParameters struct {
 	LoadBalancerArn  string `json:"loadBalancerArn,omitempty"`
 }
 
+// ResponseElements contains the details of the response for the event.
 type ResponseElements struct {
 	LoadBalancers []LoadBalancers `json:"loadBalancers,omitempty"`
 	// classic ELB
 	DNSName string `json:"dNSName,omitempty"`
 }
 
+// LoadBalancers defines the structure for load balancer information returned in the event.
 type LoadBalancers struct {
 	LoadBalancerName string `json:"loadBalancerName"`
 	LoadBalancerArn  string `json:"loadBalancerArn"`
@@ -58,7 +66,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, event events.CloudWatchEvent) {
+func handler(_ context.Context, event events.CloudWatchEvent) {
 	log.Infof("Detail = %s\n", event.Detail)
 
 	if event.Source == "aws.elasticloadbalancing" {

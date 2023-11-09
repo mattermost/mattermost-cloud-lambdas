@@ -1,3 +1,4 @@
+// Package main contains a Lambda function designed to clean up old AWS EC2 AMIs and associated snapshots that are no longer in use.
 package main
 
 import (
@@ -27,19 +28,19 @@ func handler() error {
 		Region: aws.String(os.Getenv("REGION"))},
 	)
 	if err != nil {
-		log.WithError(err).Error("AWS Session failed.")
+		log.WithError(err).Error("AWS session failed")
 		return err
 	}
 	svc := ec2.New(sess)
 	uniqueUsedImages, err := getUniqueUsedImages(svc)
 	if err != nil {
-		log.WithError(err).Error("Failed to get Unique Used AMIs.")
+		log.WithError(err).Error("Failed to get unique used AMIs")
 		return err
 	}
 	err = deleteAMIs(svc, uniqueUsedImages)
 
 	if err != nil {
-		log.WithError(err).Error("Failed to delete AMIs.")
+		log.WithError(err).Error("Failed to delete AMIs")
 		return err
 	}
 	return nil
@@ -59,15 +60,15 @@ func deleteAMIs(svc *ec2.EC2, uniqueUsedImages []string) error {
 	}
 	snapshots, err := getAllSnapshots(os.Getenv("OWNER_ID"), svc)
 	if err != nil {
-		return errors.Wrap(err, "Failed to get Snapshots.")
+		return errors.Wrap(err, "Failed to get snapshots")
 	}
 	allImages, err := svc.DescribeImages(imagesInput)
 	if err != nil {
-		return errors.Wrap(err, "Failed to describe images.")
+		return errors.Wrap(err, "Failed to describe images")
 	}
 	oldImages, err := filterImagesByDateRange(allImages.Images, 730)
 	if err != nil {
-		return errors.Wrap(err, "Failed to filter images by date range.")
+		return errors.Wrap(err, "Failed to filter images by date range")
 	}
 	dryRun := false
 	for _, i := range oldImages {
@@ -82,22 +83,22 @@ func deleteAMIs(svc *ec2.EC2, uniqueUsedImages []string) error {
 			if err != nil {
 				return errors.Wrapf(err, "Failed to deregister AMI %s", *i.ImageId)
 			}
-			var snapshotIds []string
+			var snapshotIDs []string
 			for _, snapshot := range snapshots {
 				if strings.Contains(*snapshot.Description, *i.ImageId) {
-					snapshotIds = append(snapshotIds, *snapshot.SnapshotId)
+					snapshotIDs = append(snapshotIDs, *snapshot.SnapshotId)
 				}
 			}
-			log.Info(*i.ImageId + ": Found " + strconv.Itoa(len(snapshotIds)) + " snapshot(s) to delete")
-			for _, snapshotId := range snapshotIds {
-				log.Info(*i.ImageId + ": Deleting snapshot " + snapshotId + "...")
+			log.Info(*i.ImageId + ": Found " + strconv.Itoa(len(snapshotIDs)) + " snapshot(s) to delete")
+			for _, snapshotID := range snapshotIDs {
+				log.Info(*i.ImageId + ": Deleting snapshot " + snapshotID + "...")
 				_, deleteErr := svc.DeleteSnapshot(&ec2.DeleteSnapshotInput{
 					DryRun:     &dryRun,
-					SnapshotId: &snapshotId,
+					SnapshotId: &snapshotID,
 				})
 
 				if deleteErr != nil {
-					return errors.Wrapf(err, "Failed to delete Snapshot %s", snapshotId)
+					return errors.Wrapf(err, "Failed to delete Snapshot %s", snapshotID)
 				}
 			}
 		} else {
@@ -159,11 +160,11 @@ func filterImagesByDateRange(images []*ec2.Image, olderThanHours float64) ([]*ec
 	return filteredAmis, nil
 }
 
-func getAllSnapshots(awsAccountId string, svc *ec2.EC2) ([]*ec2.Snapshot, error) {
+func getAllSnapshots(awsAccountID string, svc *ec2.EC2) ([]*ec2.Snapshot, error) {
 	var noSnapshots []*ec2.Snapshot
 
 	respDscrSnapshots, err := svc.DescribeSnapshots(&ec2.DescribeSnapshotsInput{
-		OwnerIds: []*string{&awsAccountId},
+		OwnerIds: []*string{&awsAccountID},
 	})
 	if err != nil {
 		return noSnapshots, err

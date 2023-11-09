@@ -1,3 +1,6 @@
+// Package main contains a Lambda function that responds to AWS CloudWatch Events related to RDS.
+// It processes events related to the creation and deletion of database instances, manages CloudWatch alarms,
+// and maintains a list of RDS clusters.
 package main
 
 import (
@@ -17,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 )
 
+// Detail holds the structure of the detail field of a CloudWatch event.
 type Detail struct {
 	UserIdentity      UserIdentity      `json:"userIdentity"`
 	EventSource       string            `json:"eventSource"`
@@ -26,16 +30,19 @@ type Detail struct {
 	ResponseElements  ResponseElements  `json:"responseElements"`
 }
 
+// UserIdentity represents the user identity information of the event initiator.
 type UserIdentity struct {
 	Arn       string `json:"arn"`
 	AccountID string `json:"accountId"`
 	InvokedBy string `json:"invokedBy"`
 }
 
+// RequestParameters contains specific parameters from the CloudWatch event's request.
 type RequestParameters struct {
 	DBClusterIdentifier string `json:"dBClusterIdentifier"`
 }
 
+// ResponseElements includes the response elements provided in the CloudWatch event.
 type ResponseElements struct {
 	DBClusterIdentifier string `json:"dBClusterIdentifier"`
 }
@@ -44,7 +51,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, event events.CloudWatchEvent) {
+func handler(_ context.Context, event events.CloudWatchEvent) {
 	log.Infof("Detail = %s\n", event.Detail)
 
 	if event.Source == "aws.rds" {

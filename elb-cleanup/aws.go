@@ -38,7 +38,7 @@ func NewClient(sess *session.Session) *Client {
 }
 
 // ListUnusedElb it will find any unused ELBs
-func (c *Client) ListUnusedElb(context context.Context) ([]elbv2.LoadBalancer, error) {
+func (c *Client) ListUnusedElb(_ context.Context) ([]elbv2.LoadBalancer, error) {
 	input := &elbv2.DescribeLoadBalancersInput{
 		LoadBalancerArns: []*string{},
 	}
@@ -88,7 +88,7 @@ func (c *Client) ListUnusedElb(context context.Context) ([]elbv2.LoadBalancer, e
 }
 
 // DeleteElb it will delete ELB based on ARN
-func (c *Client) DeleteElb(context context.Context, loadBalancerArn *string) error {
+func (c *Client) DeleteElb(_ context.Context, loadBalancerArn *string) error {
 
 	_, err := c.elbv2.DeleteLoadBalancer(&elbv2.DeleteLoadBalancerInput{LoadBalancerArn: loadBalancerArn})
 	if err != nil {
@@ -98,7 +98,7 @@ func (c *Client) DeleteElb(context context.Context, loadBalancerArn *string) err
 }
 
 // ListUnUsedClassiclb find unused classic LBs
-func (c *Client) ListUnUsedClassiclb(context context.Context) ([]*elb.LoadBalancerDescription, error) {
+func (c *Client) ListUnUsedClassiclb(_ context.Context) ([]*elb.LoadBalancerDescription, error) {
 	input := &elb.DescribeLoadBalancersInput{
 		LoadBalancerNames: []*string{},
 	}
@@ -118,7 +118,7 @@ func (c *Client) ListUnUsedClassiclb(context context.Context) ([]*elb.LoadBalanc
 }
 
 // DeleteClassiclb it will delete the unused classic LB based on LB Name
-func (c *Client) DeleteClassiclb(context context.Context, LoadBalancerName *string) error {
+func (c *Client) DeleteClassiclb(_ context.Context, LoadBalancerName *string) error {
 
 	_, err := c.elb.DeleteLoadBalancer(&elb.DeleteLoadBalancerInput{LoadBalancerName: LoadBalancerName})
 	if err != nil {

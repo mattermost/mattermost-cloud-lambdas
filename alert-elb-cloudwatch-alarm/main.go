@@ -1,3 +1,4 @@
+// Package main handles AWS SNS messages and creates alerts based on the message contents.
 package main
 
 import (
@@ -15,6 +16,7 @@ import (
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
 )
 
+// SNSMessageNotification represents the details of an SNS message related to AWS alarms.
 type SNSMessageNotification struct {
 	AlarmName        string `json:"AlarmName"`
 	AlarmDescription string `json:"AlarmDescription,omitempty"`
@@ -47,7 +49,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, snsEvent events.SNSEvent) {
+func handler(_ context.Context, snsEvent events.SNSEvent) {
 	for _, record := range snsEvent.Records {
 		snsRecord := record.SNS
 
@@ -101,7 +103,7 @@ func sendMattermostNotification(source string, messageNotification SNSMessageNot
 
 	payload := MMSlashResponse{
 		Username:    source,
-		IconUrl:     "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Non-Service_Specific_copy__AWS_Cloud-128.png",
+		IconURL:     "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Non-Service_Specific_copy__AWS_Cloud-128.png",
 		Attachments: attachment,
 	}
 	if os.Getenv("MATTERMOST_HOOK") != "" {

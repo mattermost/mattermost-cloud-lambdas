@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
+// MMField represents a single field in a Mattermost message attachment.
 type MMField struct {
 	Title string `json:"title"`
 	Value string `json:"value"`
 	Short bool   `json:"short"`
 }
 
-type StringInterface map[string]interface{}
-
+// MMAttachment represents a Mattermost message attachment.
 type MMAttachment struct {
 	Fallback   *string    `json:"fallback"`
 	Color      string     `json:"color"`
@@ -24,26 +24,29 @@ type MMAttachment struct {
 	Title      *string    `json:"title"`
 	TitleLink  *string    `json:"title_link"`
 	Text       *string    `json:"text"`
-	ImageUrl   *string    `json:"image_url"`
+	ImageURL   *string    `json:"image_url"`
 	Fields     []*MMField `json:"fields"`
 }
 
+// MMSlashResponse represents a Mattermost slash command response.
 type MMSlashResponse struct {
 	ResponseType string         `json:"response_type,omitempty"`
 	Username     string         `json:"username,omitempty"`
-	IconUrl      string         `json:"icon_url,omitempty"`
+	IconURL      string         `json:"icon_url,omitempty"`
 	Channel      string         `json:"channel,omitempty"`
 	Text         string         `json:"text,omitempty"`
 	GotoLocation string         `json:"goto_location,omitempty"`
 	Attachments  []MMAttachment `json:"attachments,omitempty"`
 }
 
+// AddField adds a field to the MMAttachment.
 func (attachment *MMAttachment) AddField(field MMField) *MMAttachment {
 	attachment.Fields = append(attachment.Fields, &field)
 	return attachment
 }
 
-func (o *MMSlashResponse) ToJson() string {
+// ToJSON converts the MMSlashResponse to a JSON string.
+func (o *MMSlashResponse) ToJSON() string {
 	b, _ := json.Marshal(o)
 	return string(b)
 }

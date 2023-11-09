@@ -1,3 +1,9 @@
+// Package main provides an AWS Lambda function that acts as a proxy, validating and relaying requests
+// to cloud server (provisioner). It checks for specific path prefixes and exact path matches to determine if a request
+// is authorized. The function also sends notifications to a configured Mattermost webhook in case of
+// authentication failures, providing detailed request information and error messages for debugging purposes.
+// Additionally, it contains utilities for compiling regex patterns and retrieving environment variables,
+// crucial for the operation and configuration of the Lambda function.
 package main
 
 import (
@@ -214,7 +220,7 @@ func sendToWebhook(request events.APIGatewayProxyRequest, err error) error {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("recieved status code %d", response.StatusCode)
+		return fmt.Errorf("received status code %d", response.StatusCode)
 	}
 
 	return nil

@@ -1,3 +1,8 @@
+// Package main defines an AWS Lambda function that monitors and reports on the utilization and limits
+// of various AWS resources such as RDS, ELB, VPC, IAM, EIP, EC2, and Autoscaling. The function retrieves the current
+// usage and limits of these resources and calculates their utilization percentages. It then logs this information
+// and publishes the data to CloudWatch metrics, which can be visualized in Grafana dashboards or used to trigger alarms.
+// This automated reporting aids in resource management and ensures that AWS service quotas are not exceeded.
 package main
 
 import (
@@ -271,11 +276,6 @@ func getSetS3Limits() error {
 		return err
 	}
 
-	// err = calculateMetricUtilization(float64(len(buckets.Buckets)), float64(*quota.Quota.Value), "S3BucketsUtilization")
-	// if err != nil {
-	// 	return err
-	// }
-
 	err = calculateMetricUtilization(float64(len(buckets.Buckets)), float64(customMax), "S3BucketsUtilization")
 	if err != nil {
 		return err
@@ -481,19 +481,19 @@ func getSetEC2Limits() error {
 		EndTime:    aws.Time(t),
 		Statistics: []*string{aws.String("Average")},
 		Dimensions: []*cloudwatch.Dimension{
-			&cloudwatch.Dimension{
+			{
 				Name:  aws.String("Service"),
 				Value: aws.String("EC2"),
 			},
-			&cloudwatch.Dimension{
+			{
 				Name:  aws.String("Class"),
 				Value: aws.String("Standard/OnDemand"),
 			},
-			&cloudwatch.Dimension{
+			{
 				Name:  aws.String("Resource"),
 				Value: aws.String("vCPU"),
 			},
-			&cloudwatch.Dimension{
+			{
 				Name:  aws.String("Type"),
 				Value: aws.String("Resource"),
 			},
