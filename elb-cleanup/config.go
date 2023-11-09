@@ -41,7 +41,7 @@ func init() {
 }
 
 // LoadConfig checks file and environment variables
-func LoadConfig(logger log.FieldLogger) error {
+func LoadConfig(_ log.FieldLogger) error {
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		return errors.Wrap(err, "failed to load config")

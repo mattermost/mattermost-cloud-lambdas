@@ -1,3 +1,9 @@
+// Package main provides a log forwarding Lambda function that processes events from AWS services like S3 and CloudWatch Logs.
+// It parses the incoming events, applies additional labels as configured, and forwards them to a Loki instance for log aggregation.
+// The function supports dynamic client creation for S3 based on the event source, and batch processing for log events.
+// It also allows for optional inclusion of the original log message as a label and retention of the log stream information.
+// This package requires several environment variables to be set for proper configuration, including the Loki API endpoint,
+// authentication credentials, and any extra labels for log enrichment. It is designed to be deployed as an AWS Lambda function.
 package main
 
 import (

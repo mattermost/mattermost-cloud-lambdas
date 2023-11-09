@@ -1,3 +1,9 @@
+// Package main defines an AWS Lambda function that monitors the IP address utilization of subnets within AWS VPCs.
+// It checks for provisioning subnets reaching IP address capacity and sends notifications if the number of
+// available IP addresses falls below a defined threshold. The function is triggered to evaluate the environment
+// variables for configuration, establish a new AWS session, check the IAM role's permissions, and iterate
+// through subnets within VPCs to assess and report on IP address availability. Notifications for any identified
+// issues are sent to a configured Mattermost channel.
 package main
 
 import (

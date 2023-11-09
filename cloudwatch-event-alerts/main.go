@@ -1,3 +1,5 @@
+// Package main defines an AWS Lambda function that processes SNS events, decodes them into
+// structured messages, and forwards alerts to both Mattermost and OpsGenie for notifications.
 package main
 
 import (
@@ -14,6 +16,7 @@ import (
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
 )
 
+// SNSMessage represents the structure of a message received from AWS SNS.
 type SNSMessage struct {
 	Type      string    `json:"detail-type"`
 	Account   string    `json:"account"`
@@ -21,6 +24,7 @@ type SNSMessage struct {
 	Detail    DetailStr `json:"detail"`
 }
 
+// DetailStr encapsulates the details of the SNS message relevant to the event.
 type DetailStr struct {
 	Event      string `json:"event"`
 	Result     string `json:"result"`
@@ -32,7 +36,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, snsEvent events.SNSEvent) {
+func handler(_ context.Context, snsEvent events.SNSEvent) {
 	log.Info(snsEvent)
 	for _, record := range snsEvent.Records {
 		snsRecord := record.SNS
@@ -68,7 +72,7 @@ func sendMattermostNotification(source, color string, snsMessage SNSMessage) {
 
 	payload := MMSlashResponse{
 		Username:    source,
-		IconUrl:     "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Non-Service_Specific_copy__AWS_Cloud-128.png",
+		IconURL:     "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Non-Service_Specific_copy__AWS_Cloud-128.png",
 		Attachments: attachment,
 	}
 	if os.Getenv("MATTERMOST_HOOK") != "" {

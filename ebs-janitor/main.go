@@ -1,3 +1,9 @@
+// Package main contains the implementation of an AWS Lambda function that handles CloudWatch events
+// related to AWS EBS volumes. It defines an EventHandler that checks for volumes in an 'available'
+// state and deletes them if they meet certain age criteria. The package provides a means to create a
+// new event handler, process events, and perform cleanup actions on AWS resources. It is designed to
+// be run as a scheduled task within the AWS environment and includes logging capabilities for monitoring
+// and debugging. Additionally, it can operate in a dry run mode for testing without making actual changes.
 package main
 
 import (

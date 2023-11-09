@@ -1,3 +1,11 @@
+// Package main defines a Lambda function that processes AWS SNS events, specifically related to AWS alarm notifications.
+// The function listens for SNS messages that contain alarm state information and handles two types of events:
+// 'Started cross AZ failover' and 'Completed failover'. Depending on the type of event, it sends notifications
+// with appropriate color coding to a Mattermost channel. In non-test environments, it also interacts with OpsGenie,
+// creating or closing alerts corresponding to the received SNS events. The OpsGenie and Mattermost integrations
+// require specific environment variables to be set for API keys and webhook URLs. This package is designed to
+// streamline incident management workflows by automating alert notifications and updates through common operational
+// communication platforms.
 package main
 
 import (
@@ -15,6 +23,7 @@ import (
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
 )
 
+// SNSMessageNotification represents the details of an SNS message related to AWS alarms.
 type SNSMessageNotification struct {
 	SourceID     string `json:"Source ID"`
 	EventMessage string `json:"Event Message"`
@@ -24,7 +33,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, snsEvent events.SNSEvent) {
+func handler(_ context.Context, snsEvent events.SNSEvent) {
 	for _, record := range snsEvent.Records {
 		snsRecord := record.SNS
 		var messageNotification SNSMessageNotification
@@ -64,7 +73,7 @@ func sendMattermostNotification(source, color string, messageNotification SNSMes
 
 	payload := MMSlashResponse{
 		Username:    source,
-		IconUrl:     "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Non-Service_Specific_copy__AWS_Cloud-128.png",
+		IconURL:     "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Non-Service_Specific_copy__AWS_Cloud-128.png",
 		Attachments: attachment,
 	}
 	if os.Getenv("MATTERMOST_HOOK") != "" {

@@ -45,7 +45,7 @@ func (h *EventHandler) Handle(_ context.Context, event events.CloudWatchEvent) e
 				// Delete unused ELBs
 				err = h.awsResourcer.DeleteElb(ctx, lb.LoadBalancerArn)
 				if err != nil {
-					return errors.Wrapf(err, "failed to delete ELB %s:", *lb.LoadBalancerArn)
+					return errors.Wrapf(err, "failed to delete ELB: %s", *lb.LoadBalancerArn)
 				}
 				h.logger.Info("Deleted Unused ELB ", *lb.LoadBalancerArn)
 			} else {
@@ -77,6 +77,6 @@ func (h *EventHandler) Handle(_ context.Context, event events.CloudWatchEvent) e
 		}
 	}
 
-	h.logger.WithField("eventID", event.ID).Info("event processed succesfully")
+	h.logger.WithField("eventID", event.ID).Info("event processed successfully")
 	return nil
 }

@@ -36,6 +36,28 @@ dist:
 	@echo "Packing binary..."
 	@zip $(PACKAGE).zip $(HANDLER)
 
+.PHONY: update-modules
+update-modules:
+	go get -u ./...
+	go mod tidy
+
+.PHONY: fmt
+## fmt: Run go fmt on codebase
+fmt:
+	@echo Checking if code is formatted
+		files=$$(go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}' .); \
+		if [ "$$files" ]; then \
+			gofmt_output=$$(gofmt -d -s $$files 2>&1); \
+			if [ "$$gofmt_output" ]; then \
+				echo "$$gofmt_output"; \
+				echo "gofmt failed"; \
+				echo "To fix it, run:"; \
+				echo "go fmt [FILE]"; \
+				exit 1; \
+			fi; \
+		fi; \
+	  echo "gofmt success"; \
+
 .PHONY: lint
 ## lint: Run golangci-lint on codebase
 lint:

@@ -1,3 +1,6 @@
+// Package main provides functionality to handle CloudWatch events and manage CloudWatch Alarms
+// for Elastic Load Balancers (ELBs) within AWS. It processes events, creates or deletes alarms,
+// and interfaces with other AWS services as needed.
 package main
 
 import (
@@ -18,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
+// Detail includes the relevant data from a CloudWatch event for processing.
 type Detail struct {
 	UserIdentity      UserIdentity      `json:"userIdentity"`
 	EventSource       string            `json:"eventSource"`
@@ -27,12 +31,14 @@ type Detail struct {
 	ResponseElements  ResponseElements  `json:"responseElements"`
 }
 
+// UserIdentity represents the identity of the user that initiated the event.
 type UserIdentity struct {
 	Arn       string `json:"arn"`
 	AccountID string `json:"accountId"`
 	InvokedBy string `json:"invokedBy"`
 }
 
+// RequestParameters holds the parameters used in the request that generated the event.
 type RequestParameters struct {
 	SecurityGroups []string `json:"securityGroups"`
 	Name           string   `json:"name,omitempty"`
@@ -43,12 +49,14 @@ type RequestParameters struct {
 	LoadBalancerArn  string `json:"loadBalancerArn,omitempty"`
 }
 
+// ResponseElements contains the details of the response for the event.
 type ResponseElements struct {
 	LoadBalancers []LoadBalancers `json:"loadBalancers,omitempty"`
 	// classic ELB
 	DNSName string `json:"dNSName,omitempty"`
 }
 
+// LoadBalancers defines the structure for load balancer information returned in the event.
 type LoadBalancers struct {
 	LoadBalancerName string `json:"loadBalancerName"`
 	LoadBalancerArn  string `json:"loadBalancerArn"`
@@ -58,7 +66,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, event events.CloudWatchEvent) {
+func handler(_ context.Context, event events.CloudWatchEvent) {
 	log.Infof("Detail = %s\n", event.Detail)
 
 	if event.Source == "aws.elasticloadbalancing" {
@@ -78,31 +86,37 @@ func handler(ctx context.Context, event events.CloudWatchEvent) {
 			// If DNSName is nil it is not an classic loadBalancer
 			if eventDetail.ResponseElements.DNSName == "" {
 				// extract the app/carlos-test/a83437a362089b8f from arn:aws:elasticloadbalancing:us-east-1:XXXXX:loadbalancer/app/carlos-test/a83437a362089b8f
-				elbArnName := eventDetail.ResponseElements.LoadBalancers[0].LoadBalancerArn
-				elbName = elbArnName[strings.IndexByte(elbArnName, '/')+1:]
-				targetGroupName, err = getTargetGroup(elbArnName)
-				if err != nil {
-					log.WithError(err).Errorf("Error getting the targetgroup for lb %s", elbName)
+				if len(eventDetail.ResponseElements.LoadBalancers) > 0 {
+					elbArnName := eventDetail.ResponseElements.LoadBalancers[0].LoadBalancerArn
+					elbName = elbArnName[strings.IndexByte(elbArnName, '/')+1:]
+					targetGroupName, err = getTargetGroup(elbArnName)
+					if err != nil {
+						log.WithError(err).Errorf("Error getting the targetgroup for lb %s", elbName)
+						return
+					}
+
+					lb, err := getV2LB(elbArnName)
+					if err != nil {
+						log.WithError(err).Errorf("failed to get %s information", elbName)
+						return
+					}
+
+					if len(lb) <= 0 {
+						log.Errorf("should return the LB information for %s", elbName)
+						return
+					}
+
+					if len(lb) > 2 {
+						log.Errorf("should return only one lb for %s", elbName)
+						return
+					}
+
+					elbType = *lb[0].Type
+				} else {
+					// Handle the error, maybe the data is not there or the slice was not initialized
+					log.Error("No LoadBalancers found in the event detail")
 					return
 				}
-
-				lb, err := getV2LB(elbArnName)
-				if err != nil {
-					log.WithError(err).Errorf("failed to get %s information", elbName)
-					return
-				}
-
-				if len(lb) <= 0 {
-					log.Errorf("should return the LB information for %s", elbName)
-					return
-				}
-
-				if len(lb) > 2 {
-					log.Errorf("should return only one lb for %s", elbName)
-					return
-				}
-
-				elbType = *lb[0].Type
 			} else {
 				elbName = eventDetail.RequestParameters.LoadBalancerName
 			}

@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/golang/mock/gomock"
-	"github.com/mattermost/mattermost-cloud-monitoring/tree/MM-38981-cleanup-unused-LBs/lambda-functions/mocks"
+	"github.com/mattermost/mattermost-cloud-lambdas/tree/MM-38981-cleanup-unused-LBs/lambda-functions/mocks"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

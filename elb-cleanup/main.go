@@ -1,3 +1,8 @@
+// Package main defines an AWS Lambda function that identifies and cleans up unused Elastic Load Balancers (ELBs)
+// and Classic Load Balancers within AWS. The function checks for load balancers that are not in use and deletes them
+// to avoid unnecessary costs. It logs build information such as the version and build time, loads necessary configurations,
+// and establishes an AWS session. The function can be configured to run in a dry-run mode, where it only logs the load
+// balancers that would be deleted without actually performing the deletion. This function is triggered by CloudWatch events.
 package main
 
 import (

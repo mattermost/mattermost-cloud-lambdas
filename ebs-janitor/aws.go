@@ -32,7 +32,7 @@ func NewClient(sess *session.Session) *Client {
 	}
 }
 
-// ListEBS listing ebs for deletion
+// ListVolumes listing ebs for deletion
 func (c *Client) ListVolumes(context context.Context, volumeState string) ([]*ec2.Volume, error) {
 	if !contains(ec2.VolumeState_Values(), volumeState) {
 		return []*ec2.Volume{}, fmt.Errorf("failed: wrong volume state value, %s", volumeState)

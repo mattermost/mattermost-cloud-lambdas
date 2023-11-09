@@ -35,6 +35,11 @@ dist:
 	@echo "Packing binary..."
 	@zip $(PACKAGE).zip $(HANDLER)
 
+.PHONY: update-modules
+update-modules:
+	go get -u ./...
+	go mod tidy
+
 .PHONY: fmt
 ## fmt: Run go fmt on codebase
 fmt:
