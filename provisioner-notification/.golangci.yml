@@ -1,0 +1,16 @@
+
+run:
+  skip-dirs-use-default: false
+
+linters:
+  enable:
+    - revive
+    - gocyclo
+    - misspell
+
+gocyclo:
+  min-complexity: 15
+
+issues:
+  exclude-use-default: false
+
