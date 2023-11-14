@@ -222,3 +222,48 @@ jobs:
           LAMBDA_NAME: cloudwatch-event-alerts
           AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+
+  upload-elrond-notification:
+    name: Upload elrond-notification function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: elrond-notification
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+
+  upload-gitlab-webhook:
+    name: Upload gitlab-webhook function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: gitlab-webhook
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+
+  upload-provisioner-notification:
+    name: Upload provisioner-notification function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: provisioner-notification
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
