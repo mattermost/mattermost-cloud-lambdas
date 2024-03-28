@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kubeval/log"
 	log "github.com/sirupsen/logrus"
 
 	pagerduty "github.com/PagerDuty/go-pagerduty"
@@ -113,7 +114,7 @@ func sendMattermostNotification(source string, messageNotification SNSMessageNot
 func sendPagerDutyNotification(messageNotification SNSMessageNotification) {
 	integrationKey := os.Getenv("PAGERDUTY_INTEGRATION_KEY")
 	if integrationKey == "" {
-		log.Println("No PagerDuty Integration Key setup")
+		log.Warn("No PagerDuty Integration Key setup")
 		return
 	}
 

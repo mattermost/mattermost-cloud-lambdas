@@ -83,7 +83,7 @@ func sendMattermostNotification(source, color string, snsMessage SNSMessage) {
 func sendPagerDutyNotification(snsMessage SNSMessage) {
 	integrationKey := os.Getenv("PAGERDUTY_INTEGRATION_KEY")
 	if integrationKey == "" {
-		log.Println("No PagerDuty Integration Key setup")
+		log.Warn("No PagerDuty Integration Key setup")
 		return
 	}
 

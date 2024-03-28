@@ -290,7 +290,7 @@ func sendPagerDutyNotification(payload *cloud.WebhookPayload) error {
 
 	integrationKey := os.Getenv("PAGERDUTY_INTEGRATION_KEY")
 	if integrationKey == "" {
-		log.Println("No PagerDuty Integration Key setup")
+		log.Warn("No PagerDuty Integration Key setup")
 		return errors.New("missing pagerduty integration key")
 	}
 
