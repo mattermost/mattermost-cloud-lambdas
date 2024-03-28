@@ -217,9 +217,6 @@ func sendPagerDutyNotification(payload *elrond.WebhookPayload) error {
 			"Env":       elrondEnv,
 		},
 	}
-	for key, value := range payload.ExtraData {
-		alertReq.Details[key] = value
-	}
 
 	event := pagerduty.V2Event{
 		RoutingKey: integrationKey,

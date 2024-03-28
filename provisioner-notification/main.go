@@ -307,9 +307,6 @@ func sendPagerDutyNotification(payload *cloud.WebhookPayload) error {
 			"Env":       provisionerEnv,
 		},
 	}
-	for key, value := range payload.ExtraData {
-		alertReq.Details[key] = value
-	}
 
 	event := pagerduty.V2Event{
 		RoutingKey: integrationKey,
