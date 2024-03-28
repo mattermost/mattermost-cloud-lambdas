@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
+	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	elrond "github.com/mattermost/elrond/model"
-	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
-	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -127,7 +127,7 @@ func handleRingWebhook(payload *elrond.WebhookPayload) error {
 
 	if alert {
 		sendMattermostWebhook(mmWebhookAlert, mmPayload)
-		sendOpsGenieNotification(payload)
+		sendPagerDutyNotification(payload)
 	}
 
 	return sendMattermostWebhook(mmWebhook, mmPayload)
@@ -192,38 +192,23 @@ func sendMattermostWebhook(webhookURL string, payload mmSlashResponse) error {
 	return nil
 }
 
-func sendOpsGenieNotification(payload *elrond.WebhookPayload) error {
+func sendPagerDutyNotification(payload *elrond.WebhookPayload) error {
 	elrondEnv := os.Getenv("ENVIRONMENT")
 	if elrondEnv == "" {
 		return errors.New("missing environment from payload")
 	}
 
-	opsGenieAPIKey := os.Getenv("OPSGENIE_APIKEY")
-	opsGenieSchedulerTeam := os.Getenv("OPSGENIE_SCHEDULER_TEAM")
-	if opsGenieAPIKey == "" || opsGenieSchedulerTeam == "" {
-		log.Warn("No OpsGenie APIKEY/Scheduler team setup")
-		return errors.New("missing OpsGenie APIKEY/Scheduler team setup")
-	}
-
-	alertClient, err := alert.NewClient(&client.Config{
-		ApiKey: opsGenieAPIKey,
-	})
-	if err != nil {
-		log.WithError(err).Error("not able to create a new opsgenie client")
-		return err
+	integrationKey := os.Getenv("PAGERDUTY_INTEGRATION_KEY")
+	if integrationKey == "" {
+		log.Warn("No PagerDuty Integration Key setup")
+		return errors.New("missing pagerduty integration key")
 	}
 
 	tm := time.Unix(0, payload.Timestamp)
-	alertReq := &alert.CreateAlertRequest{
-		Message:     fmt.Sprintf("%s - %s %s", payload.Type, payload.ID, payload.NewState),
-		Description: fmt.Sprintf("%s - %s %s", payload.Type, payload.ID, payload.NewState),
-		Responders: []alert.Responder{
-			{
-				Type: alert.ScheduleResponder,
-				Name: opsGenieSchedulerTeam,
-			},
-		},
-		Tags: []string{"Elrond", payload.Type},
+	alertReq := &pagerduty.V2Payload{
+		Summary:  fmt.Sprintf("%s - %s %s", payload.Type, payload.ID, payload.NewState),
+		Source:   "Alarm System",
+		Severity: "critical",
 		Details: map[string]string{
 			"Type":      payload.Type,
 			"State":     payload.NewState,
@@ -231,17 +216,21 @@ func sendOpsGenieNotification(payload *elrond.WebhookPayload) error {
 			"Timestamp": tm.String(),
 			"Env":       elrondEnv,
 		},
-		Priority: alert.P2,
-	}
-	for key, value := range payload.ExtraData {
-		alertReq.Details[key] = value
 	}
 
-	_, err = alertClient.Create(nil, alertReq)
+	event := pagerduty.V2Event{
+		RoutingKey: integrationKey,
+		Action:     "trigger",
+		Payload:    alertReq,
+	}
+
+	// Send the event to PagerDuty
+	_, err := pagerduty.ManageEvent(event)
 	if err != nil {
-		log.WithError(err).Error("failed to create the OpsGenie Alert")
-		return err
+		log.WithError(err).Error("Failed to send PagerDuty notification")
+		return errors.New("Failed to send PagerDuty notification")
 	}
 
+	log.Info("PagerDuty event sent successfully")
 	return nil
 }

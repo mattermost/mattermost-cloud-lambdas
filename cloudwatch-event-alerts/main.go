@@ -1,19 +1,19 @@
 // Package main defines an AWS Lambda function that processes SNS events, decodes them into
-// structured messages, and forwards alerts to both Mattermost and OpsGenie for notifications.
+// structured messages, and forwards alerts to both Mattermost and PagerDuty for notifications.
 package main
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
+	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
-	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
 )
 
 // SNSMessage represents the structure of a message received from AWS SNS.
@@ -48,9 +48,9 @@ func handler(_ context.Context, snsEvent events.SNSEvent) {
 
 		sendMattermostNotification(record.EventSource, "#FF0000", snsMessage)
 
-		// Trigger OpsGenie
+		// Trigger PagerDuty
 		if os.Getenv("ENVIRONMENT") != "" && os.Getenv("ENVIRONMENT") != "test" {
-			sendOpsGenieNotification(snsMessage)
+			sendPagerDutyNotification(snsMessage)
 		}
 	}
 }
@@ -80,36 +80,40 @@ func sendMattermostNotification(source, color string, snsMessage SNSMessage) {
 	}
 }
 
-func sendOpsGenieNotification(snsMessage SNSMessage) {
-	if os.Getenv("OPSGENIE_APIKEY") == "" || os.Getenv("OPSGENIE_SCHEDULER_TEAM") == "" {
-		log.Warn("No OpsGenie APIKEY/Scheduler team setup")
-		return
-	}
-
-	alertClient, err := alert.NewClient(&client.Config{
-		ApiKey: os.Getenv("OPSGENIE_APIKEY"),
-	})
-	if err != nil {
-		log.WithError(err).Error("not able to create a new opsgenie client")
+func sendPagerDutyNotification(snsMessage SNSMessage) {
+	integrationKey := os.Getenv("PAGERDUTY_INTEGRATION_KEY")
+	if integrationKey == "" {
+		log.Warn("No PagerDuty Integration Key setup")
 		return
 	}
 
 	detail, _ := json.Marshal(snsMessage.Detail)
 
-	_, err = alertClient.Create(nil, &alert.CreateAlertRequest{
-		Message:     "New Cloudwatch Event alert was generated",
-		Description: string(detail),
-		Responders: []alert.Responder{
-			{Type: alert.ScheduleResponder, Name: os.Getenv("OPSGENIE_SCHEDULER_TEAM")},
-		},
-		Tags: []string{"AWS", "Cloudwatch"},
-		Details: map[string]string{
-			"Type":      snsMessage.Type,
-			"Account":   snsMessage.Account,
-			"Resources": strings.Join(snsMessage.Resources, ","),
-			"Detail":    string(detail),
-		},
-		Priority: alert.P1,
-	})
+	detailString := fmt.Sprintf("AWS Account: %s\nResources: %s\nDetail:\n%s",
+		snsMessage.Account,
+		strings.Join(snsMessage.Resources, ","),
+		string(detail),
+	)
 
+	event := pagerduty.V2Event{
+		RoutingKey: integrationKey,
+		Action:     "trigger",
+		Payload: &pagerduty.V2Payload{
+			Summary:  "New Cloudwatch Event alert was generated",
+			Source:   "Alarm System",
+			Severity: "critical",
+			Details: map[string]interface{}{
+				"Message": detailString,
+			},
+		},
+	}
+
+	// Send the event to PagerDuty
+	_, err := pagerduty.ManageEvent(event)
+	if err != nil {
+		log.WithError(err).Error("Failed to send PagerDuty notification")
+		return
+	}
+
+	log.Info("PagerDuty event sent successfully")
 }
