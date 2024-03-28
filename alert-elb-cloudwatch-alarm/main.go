@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubeval/log"
 	log "github.com/sirupsen/logrus"
 
 	pagerduty "github.com/PagerDuty/go-pagerduty"
