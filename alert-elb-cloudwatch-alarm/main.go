@@ -10,10 +10,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	pagerduty "github.com/PagerDuty/go-pagerduty"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
-	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
 )
 
 // SNSMessageNotification represents the details of an SNS message related to AWS alarms.
@@ -61,12 +60,12 @@ func handler(_ context.Context, snsEvent events.SNSEvent) {
 
 		sendMattermostNotification(record.EventSource, messageNotification)
 
-		// Trigger OpsGenie
+		// Trigger PagerDuty
 		if os.Getenv("ENVIRONMENT") != "" && os.Getenv("ENVIRONMENT") != "test" {
 			if messageNotification.NewStateValue != "OK" {
-				sendOpsGenieNotification(messageNotification)
+				sendPagerDutyNotification(messageNotification)
 			} else {
-				closeOpsGenieAlert(messageNotification)
+				closePagerDutyIncidents(messageNotification)
 			}
 		}
 	}
@@ -111,17 +110,10 @@ func sendMattermostNotification(source string, messageNotification SNSMessageNot
 	}
 }
 
-func sendOpsGenieNotification(messageNotification SNSMessageNotification) {
-	if os.Getenv("OPSGENIE_APIKEY") == "" || os.Getenv("OPSGENIE_SCHEDULER_TEAM") == "" {
-		log.Warn("No OpsGenie APIKEY/Scheduler team setup")
-		return
-	}
-
-	alertClient, err := alert.NewClient(&client.Config{
-		ApiKey: os.Getenv("OPSGENIE_APIKEY"),
-	})
-	if err != nil {
-		log.WithError(err).Error("not able to create a new opsgenie client")
+func sendPagerDutyNotification(messageNotification SNSMessageNotification) {
+	integrationKey := os.Getenv("PAGERDUTY_INTEGRATION_KEY")
+	if integrationKey == "" {
+		log.Println("No PagerDuty Integration Key setup")
 		return
 	}
 
@@ -130,57 +122,92 @@ func sendOpsGenieNotification(messageNotification SNSMessageNotification) {
 		dimensions = append(dimensions, fmt.Sprintf("%s: %s", dimension.Name, dimension.Value))
 	}
 
-	_, err = alertClient.Create(nil, &alert.CreateAlertRequest{
-		Message:     messageNotification.AlarmName,
-		Description: messageNotification.AlarmDescription,
-		Responders: []alert.Responder{
-			{Type: alert.ScheduleResponder, Name: os.Getenv("OPSGENIE_SCHEDULER_TEAM")},
-		},
-		Tags: []string{messageNotification.AlarmName, "AWS", "LB"},
-		Details: map[string]string{
-			"AWS Account": messageNotification.AWSAccountID,
-			"Region":      messageNotification.Region,
-			"State":       messageNotification.NewStateValue,
-			"MetricName":  messageNotification.Trigger.MetricName,
-			"NameSpace":   messageNotification.Trigger.Namespace,
-			"Dimensions":  strings.Join(dimensions, "\n"),
-		},
-		Priority: alert.P1,
-	})
+	detailString := fmt.Sprintf("AWS Account: %s\nRegion: %s\nState: %s\nMetricName: %s\nNamespace: %s\nDimensions:\n%s",
+		messageNotification.AWSAccountID,
+		messageNotification.Region,
+		messageNotification.NewStateValue,
+		messageNotification.Trigger.MetricName,
+		messageNotification.Trigger.Namespace,
+		strings.Join(dimensions, "\n"),
+	)
 
+	event := pagerduty.V2Event{
+		RoutingKey: integrationKey,
+		Action:     "trigger",
+		Payload: &pagerduty.V2Payload{
+			Summary:  messageNotification.AlarmName + " - " + messageNotification.AlarmDescription,
+			Source:   "Alarm System",
+			Severity: "critical",
+			Details: map[string]interface{}{
+				"Message": detailString,
+			},
+		},
+	}
+
+	// Send the event to PagerDuty
+	_, err := pagerduty.ManageEvent(event)
+	if err != nil {
+		log.WithError(err).Error("Failed to send PagerDuty notification")
+		return
+	}
+
+	log.Info("PagerDuty event sent successfully")
 }
 
-func closeOpsGenieAlert(messageNotification SNSMessageNotification) {
-	if os.Getenv("OPSGENIE_APIKEY") == "" {
-		log.Warn("No OpsGenie APIKEY setup")
+func closePagerDutyIncidents(messageNotification SNSMessageNotification) {
+	apiKey := os.Getenv("PAGERDUTY_APIKEY")
+	email := os.Getenv("EMAIL_ADDRESS")
+	if apiKey == "" {
+		log.Warn("No PagerDuty APIKEY setup")
 		return
 	}
 
-	alertClient, err := alert.NewClient(&client.Config{
-		ApiKey: os.Getenv("OPSGENIE_APIKEY"),
-	})
-	if err != nil {
-		log.WithError(err).Error("not able to create a new opsgenie client")
-		return
-	}
+	client := pagerduty.NewClient(apiKey)
 
-	getResultQuery, err := alertClient.List(nil, &alert.ListAlertRequest{
-		Query: fmt.Sprintf("tag:%s", messageNotification.AlarmName),
-	})
-	if err != nil {
-		log.WithError(err).Error("error getting the alterts")
-		return
-	}
+	var opts pagerduty.ListIncidentsOptions
 
-	for _, alarm := range getResultQuery.Alerts {
-		_, err = alertClient.Close(nil, &alert.CloseAlertRequest{
-			IdentifierType:  alert.ALERTID,
-			IdentifierValue: alarm.Id,
-		})
+	opts.Limit = 25 // Set page size, max is often 100
+	opts.Offset = 0 // Start with the first page
+	opts.Total = true
+
+	var incidents []pagerduty.Incident
+
+	for {
+		// List incidents with current pagination options
+		res, err := client.ListIncidents(opts)
 		if err != nil {
-			log.WithError(err).Errorf("error closing the alert %s", alarm.Id)
-			return
+			log.WithError(err).Errorf("Error retrieving incidents: %v")
+			break
+		}
+
+		// Process the incidents
+		for _, incident := range res.Incidents {
+			incidents = append(incidents, incident)
+		}
+
+		// Check if we've retrieved all incidents
+		if opts.Offset+opts.Limit >= res.Total {
+			break // Exit loop if we have retrieved all incidents
+		}
+		opts.Offset += opts.Limit // Prepare for the next page
+	}
+
+	for _, incident := range incidents {
+		// Check if incident description or details match your criteria
+		// This part is up to you on how you match incidents to your messageNotification
+		if incident.Description == fmt.Sprintf("%s - %s", messageNotification.AlarmName, messageNotification.AlarmDescription) {
+			// Resolve the incident
+
+			_, err := client.ManageIncidentsWithContext(context.TODO(), email, []pagerduty.ManageIncidentsOptions{
+				{
+					ID:     incident.ID,
+					Status: "resolved",
+				},
+			})
+			if err != nil {
+				log.WithError(err).Errorf("error resolving the incident %s", incident.ID)
+				return
+			}
 		}
 	}
-
 }
