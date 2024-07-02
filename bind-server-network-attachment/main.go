@@ -8,6 +8,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -32,29 +34,55 @@ func handler(_ context.Context, autoScalingEvent events.AutoScalingEvent) {
 		vpcID, subNetID, err := getVpcSubNetID(instanceID)
 		if err != nil {
 			log.WithError(err).Errorf("Error getting the subnet from instanceID=%s", instanceID)
-			completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
+			err := completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
+			if err != nil {
+				return
+			}
 			return
 		}
 		log.Infof("vpcID=%s Subnet=%s\n", vpcID, subNetID)
 
-		networkInterfaceID, err := getNetWorkInterface(vpcID, subNetID)
-		if err != nil {
-			log.WithError(err).Errorf("Error getting the subnet from instanceID=%s", instanceID)
-			completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
-			return
-		}
-		log.Infof("networkInterfaceID=%s\n", networkInterfaceID)
+		err = retry(5, 2*time.Second, func() error {
+			networkInterfaceID, err := getNetWorkInterface(vpcID, subNetID)
+			if err != nil {
+				log.WithError(err).Errorf("Error getting the network interface for instanceID=%s", instanceID)
+				return err
+			}
+			log.Infof("networkInterfaceID=%s\n", networkInterfaceID)
+			attachID, err := attachInterface(networkInterfaceID, instanceID)
+			if err != nil {
+				log.WithError(err).Errorf("Error attaching the network interface to instanceID=%s\n", instanceID)
+				return err
+			}
+			log.Infof("attachID=%s\n", attachID)
+			return nil
+		})
 
-		attachID, err := attachInterface(networkInterfaceID, instanceID)
 		if err != nil {
-			log.WithError(err).Errorf("Error getting the subnet from instanceID=%s\n", instanceID)
-			completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
-			return
+			err := completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
+			if err != nil {
+				return
+			}
+		} else {
+			err := completeLifecycleActionSuccess(lifecycleHookName, autoScalingGroupName, instanceID)
+			if err != nil {
+				return
+			}
 		}
-		log.Infof("attachID=%s\n", attachID)
-
-		completeLifecycleActionSuccess(lifecycleHookName, autoScalingGroupName, instanceID)
 	}
+}
+
+func retry(attempts int, sleep time.Duration, fn func() error) error {
+	var err error
+	for i := 0; i < attempts; i++ {
+		if err = fn(); err == nil {
+			return nil
+		}
+		jitter := time.Duration(rand.Int63n(int64(sleep)))
+		time.Sleep(sleep + jitter)
+		sleep = sleep * 2
+	}
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
 func completeLifecycleActionFailure(hookName, groupName, instanceID string) error {
@@ -162,7 +190,7 @@ func getNetWorkInterface(vpcID, subNetID string) (string, error) {
 
 	result, err := svc.DescribeNetworkInterfaces(input)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	for _, networkInterface := range result.NetworkInterfaces {
@@ -170,7 +198,7 @@ func getNetWorkInterface(vpcID, subNetID string) (string, error) {
 			return *networkInterface.NetworkInterfaceId, nil
 		}
 	}
-	return "", fmt.Errorf("No Network Interface available")
+	return "", fmt.Errorf("no Network Interface available")
 }
 
 func getVpcSubNetID(instanceID string) (string, string, error) {
