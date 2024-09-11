@@ -101,6 +101,7 @@ func handleRingWebhook(payload *elrond.WebhookPayload) error {
 	}
 
 	attach = *attach.AddField(mmField{Title: "Ring ID", Value: payload.ID, Short: true})
+	attach = *attach.AddField(mmField{Title: "Ring Name", Value: payload.Name, Short: true})
 	attach = *attach.AddField(mmField{Title: "Type", Value: payload.Type, Short: true})
 	attach = *attach.AddField(mmField{Title: "New State", Value: payload.NewState, Short: true})
 	attach = *attach.AddField(mmField{Title: "Old State", Value: payload.OldState, Short: true})
@@ -206,7 +207,7 @@ func sendPagerDutyNotification(payload *elrond.WebhookPayload) error {
 
 	tm := time.Unix(0, payload.Timestamp)
 	alertReq := &pagerduty.V2Payload{
-		Summary:  fmt.Sprintf("%s - %s %s", payload.Type, payload.ID, payload.NewState),
+		Summary:  fmt.Sprintf("%s - %s - %s %s", payload.Type, payload.ID, payload.Name, payload.NewState),
 		Source:   "Alarm System",
 		Severity: "critical",
 		Details: map[string]string{
