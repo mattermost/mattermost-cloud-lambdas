@@ -8,14 +8,10 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
-
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -26,24 +22,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/servicequotas"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
-	"github.com/pkg/errors"
-
 	log "github.com/sirupsen/logrus"
 )
-
-const (
-	vpcID = "VPC_ID"
-)
-
-type clientConfig struct {
-	Client      *clientcmdapi.Config
-	ClusterName string
-	ContextName string
-	roleARN     string
-	sts         stsiface.STSAPI
-}
 
 func main() {
 	lambda.Start(handler)
@@ -109,43 +89,6 @@ func handler() {
 	if err != nil {
 		log.WithError(err).Error("Unable to get the existing EC2 limits and set the CloudWatch metric data")
 	}
-}
-
-// newSession creates a new STS session
-func newSession() *session.Session {
-	config := aws.NewConfig()
-	config = config.WithCredentialsChainVerboseErrors(true)
-
-	opts := session.Options{
-		Config:                  *config,
-		SharedConfigState:       session.SharedConfigEnable,
-		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
-	}
-
-	stscreds.DefaultDuration = 30 * time.Minute
-
-	return session.Must(session.NewSessionWithOptions(opts))
-}
-
-// checkAuth checks the AWS access
-func checkAuth(stsAPI stsiface.STSAPI) (string, error) {
-	input := &sts.GetCallerIdentityInput{}
-	output, err := stsAPI.GetCallerIdentity(input)
-	if err != nil {
-		return "", errors.Wrap(err, "checking AWS STS access – cannot get role ARN for current session")
-	}
-	iamRoleARN := *output.Arn
-	log.Debugf("Role ARN for the current session is %s", iamRoleARN)
-	return iamRoleARN, nil
-}
-
-// getUsername gets the username out of the AWS Lambda role arn
-func getUsername(iamRoleARN string) string {
-	usernameParts := strings.Split(iamRoleARN, "/")
-	if len(usernameParts) > 1 {
-		return usernameParts[len(usernameParts)-1]
-	}
-	return "iam-root-account"
 }
 
 // getELBLimits is used to get the existing ELB Limits and set the CW metric data.
@@ -306,7 +249,7 @@ func getSetVPCLimits() error {
 
 	// Create VPC service client
 	svcVPC := ec2.New(sess)
-	vpcs, err := svcVPC.DescribeVpcs(&ec2.DescribeVpcsInput{})
+	vpcs, _ := svcVPC.DescribeVpcs(&ec2.DescribeVpcsInput{})
 	log.Infof("Setting CloudWatch metric for VPCsUsed - %v", float64(len(vpcs.Vpcs)))
 	err = addCWMetricData("VPCsUsed", float64(len(vpcs.Vpcs)))
 	if err != nil {
@@ -436,7 +379,7 @@ func getSetEIPLimits() error {
 
 	// Create EIP service client
 	svcEIP := ec2.New(sess)
-	eips, err := svcEIP.DescribeAddresses(&ec2.DescribeAddressesInput{})
+	eips, _ := svcEIP.DescribeAddresses(&ec2.DescribeAddressesInput{})
 	log.Infof("Setting CloudWatch metric for EIPsUsed - %v", float64(len(eips.Addresses)))
 	err = addCWMetricData("EIPsUsed", float64(len(eips.Addresses)))
 	if err != nil {
@@ -565,9 +508,9 @@ func getSetNLBALBLimits() error {
 	albCounter := 0
 
 	for {
-		existingLBs, err := svc.DescribeLoadBalancers(&elbv2.DescribeLoadBalancersInput{Marker: next})
-		if err != nil {
-			return err
+		existingLBs, existingLBsErr := svc.DescribeLoadBalancers(&elbv2.DescribeLoadBalancersInput{Marker: next})
+		if existingLBsErr != nil {
+			return existingLBsErr
 		}
 
 		for _, lb := range existingLBs.LoadBalancers {

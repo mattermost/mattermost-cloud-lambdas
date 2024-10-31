@@ -5,6 +5,7 @@ GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
 GOARCH  ?= amd64
 GO_TEST_FLAGS ?= -race
+GOLANGCILINT_VER := v1.61.0
 
 # Binary
 TAG ?= dev-local
@@ -81,3 +82,9 @@ test:
 help:
 	@echo "Usage:"
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+
+
+check-style: lint fmt
+
+lint-install:
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VER)

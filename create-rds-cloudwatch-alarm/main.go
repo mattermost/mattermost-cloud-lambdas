@@ -70,7 +70,7 @@ func handler(_ context.Context, event events.CloudWatchEvent) {
 				!strings.Contains(eventDetail.RequestParameters.DBClusterIdentifier, "test-") {
 
 				log.Infof("Creating CloudWatch Alarm for %s\n", eventDetail.RequestParameters.DBClusterIdentifier)
-				err := createCloudWatchAlarm(eventDetail.RequestParameters.DBClusterIdentifier)
+				err = createCloudWatchAlarm(eventDetail.RequestParameters.DBClusterIdentifier)
 				if err != nil {
 					log.WithError(err).Errorln("Error creating the CloudWatch Alarm")
 					return

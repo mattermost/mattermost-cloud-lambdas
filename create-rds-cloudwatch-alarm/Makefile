@@ -3,6 +3,7 @@ PACKAGE ?= $(HANDLER)
 GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
 GOARCH  ?= amd64
+GOLANGCILINT_VER := v1.61.0
 
 WORKDIR = $(CURDIR:$(GOPATH)%=/go%)
 ifeq ($(WORKDIR),$(CURDIR))
@@ -56,4 +57,9 @@ clean:
 	@echo "Cleaning up..."
 	@rm -rf $(HANDLER) $(PACKAGE).zip
 
-.PHONY: all build pack clean update-modules
+check-style: lint fmt
+
+lint-install:
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VER)
+
+.PHONY: all build pack clean update-modules check-style lint-install

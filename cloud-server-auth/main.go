@@ -16,6 +16,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -29,24 +30,11 @@ const (
 	mattermostWebhookIconURL = "https://images2.minutemediacdn.com/image/upload/c_fill,g_auto,h_1248,w_2220/f_auto,q_auto,w_1100/v1555925520/shape/mentalfloss/800px-princesslineup.jpg"
 )
 
-var (
-	cloudServerURL       string
-	mattermostWebhookURL string
-	validPrefixes        = []string{
-		"api/installation",
-		"/api/installation",
-		"api/cluster_installation",
-		"/api/cluster_installation",
-		"api/webhooks",
-		"/api/webhooks",
-		"/api/webhook",
-		"api/webhook",
-	}
-	exactMatchRegexes = compileRegexes([]string{
-		`^/api/security/installation/[a-zA-Z0-9]{26}/deletion/lock$`,
-		`^/api/security/installation/[a-zA-Z0-9]{26}/deletion/unlock$`,
-	})
-)
+// Config holds environment variables for cloud server and Mattermost webhook URLs.
+type Config struct {
+	CloudServerURL       string
+	MattermostWebhookURL string
+}
 
 type errorResponse struct {
 	Error string `json:"error"`
@@ -58,11 +46,7 @@ type webhookRequest struct {
 	IconURL  string `json:"icon_url"`
 }
 
-func init() {
-	cloudServerURL = getEnv(cloudServerEnv)
-	mattermostWebhookURL = getEnv(mattermostWebhookEnv)
-
-	// Configure logging
+func initLogging() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
 	if os.Getenv("AWS_EXECUTION_ENV") == "" {
@@ -72,14 +56,27 @@ func init() {
 	}
 }
 
-func validateCloudRequest(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func loadConfig() (*Config, error) {
 	cloudServerURL := os.Getenv(cloudServerEnv)
 	if cloudServerURL == "" {
-		return processFailedAuth(request, http.StatusInternalServerError, fmt.Errorf("cloud server URL var %s not set", cloudServerEnv))
+		return nil, fmt.Errorf("environment variable %s is not set", cloudServerEnv)
 	}
-	parsedCloudURL, err := url.Parse(cloudServerURL)
+
+	mattermostWebhookURL := os.Getenv(mattermostWebhookEnv)
+	if mattermostWebhookURL == "" {
+		return nil, fmt.Errorf("environment variable %s is not set", mattermostWebhookEnv)
+	}
+
+	return &Config{
+		CloudServerURL:       cloudServerURL,
+		MattermostWebhookURL: mattermostWebhookURL,
+	}, nil
+}
+
+func validateCloudRequest(config *Config, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	parsedCloudURL, err := url.Parse(config.CloudServerURL)
 	if err != nil {
-		return processFailedAuth(request, http.StatusInternalServerError, errors.Wrapf(err, "cloud server URL %s is invalid", cloudServerURL))
+		return processFailedAuth(config, request, http.StatusInternalServerError, errors.Wrapf(err, "cloud server URL %s is invalid", config.CloudServerURL))
 	}
 
 	log.Infof("Initial path: %s", request.Path)
@@ -87,7 +84,7 @@ func validateCloudRequest(request events.APIGatewayProxyRequest) (events.APIGate
 
 	parsedPath, err := url.Parse(request.Path)
 	if err != nil {
-		return processFailedAuth(request, http.StatusBadRequest, err)
+		return processFailedAuth(config, request, http.StatusBadRequest, err)
 	}
 
 	queryValues := make(url.Values)
@@ -98,30 +95,27 @@ func validateCloudRequest(request events.APIGatewayProxyRequest) (events.APIGate
 
 	final := parsedCloudURL.ResolveReference(parsedPath)
 	if !isAuthorized(final) {
-		return processFailedAuth(request, http.StatusUnauthorized, fmt.Errorf("%s is not an authorized path", final.EscapedPath()))
+		return processFailedAuth(config, request, http.StatusUnauthorized, fmt.Errorf("%s is not an authorized path", final.EscapedPath()))
 	}
 
 	log.Infof("Final API call: Method %s | %s", request.HTTPMethod, final.String())
 
 	cloudServerRequest, err := http.NewRequest(request.HTTPMethod, final.String(), bytes.NewReader([]byte(request.Body)))
 	if err != nil {
-		return processFailedAuth(request, http.StatusInternalServerError, err)
-	}
-	if request.MultiValueHeaders != nil {
-		cloudServerRequest.Header = request.MultiValueHeaders
+		return processFailedAuth(config, request, http.StatusInternalServerError, err)
 	}
 	cloudServerRequest.Header.Set("Accept-Encoding", "")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(cloudServerRequest)
 	if err != nil {
-		return processFailedAuth(request, http.StatusInternalServerError, errors.Wrap(err, "failed when making request to cloud server"))
+		return processFailedAuth(config, request, http.StatusInternalServerError, errors.Wrap(err, "failed when making request to cloud server"))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return processFailedAuth(request, http.StatusInternalServerError, errors.Wrap(err, "failed to read cloud server response body"))
+		return processFailedAuth(config, request, http.StatusInternalServerError, errors.Wrap(err, "failed to read cloud server response body"))
 	}
 
 	log.Info("Success!")
@@ -135,14 +129,10 @@ func validateCloudRequest(request events.APIGatewayProxyRequest) (events.APIGate
 
 func isAuthorized(url *url.URL) bool {
 	validPrefixes := []string{
-		"api/installation",
-		"/api/installation",
-		"api/cluster_installation",
-		"/api/cluster_installation",
-		"api/webhooks",
-		"/api/webhooks",
-		"/api/webhook",
-		"api/webhook",
+		"api/installation", "/api/installation",
+		"api/cluster_installation", "/api/cluster_installation",
+		"api/webhooks", "/api/webhooks",
+		"/api/webhook", "api/webhook",
 	}
 
 	for _, prefix := range validPrefixes {
@@ -151,7 +141,6 @@ func isAuthorized(url *url.URL) bool {
 		}
 	}
 
-	// These endpoints require an exact match, so the cloud plugin can talk to some but not all security endpoints.
 	exactMatchRegexes := []string{
 		"^/api/security/installation/[a-zA-Z0-9]{26}/deletion/lock$",
 		"^/api/security/installation/[a-zA-Z0-9]{26}/deletion/unlock$",
@@ -166,27 +155,22 @@ func isAuthorized(url *url.URL) bool {
 	return false
 }
 
-func processFailedAuth(request events.APIGatewayProxyRequest, statusCode int, err error) (events.APIGatewayProxyResponse, error) {
+func processFailedAuth(config *Config, request events.APIGatewayProxyRequest, statusCode int, err error) (events.APIGatewayProxyResponse, error) {
 	log.WithError(err).Error("Auth Failure")
 
-	webhookErr := sendToWebhook(request, err)
-	if webhookErr != nil {
+	if webhookErr := sendToWebhook(config, request, err); webhookErr != nil {
 		log.WithError(webhookErr).Error("Mattermost Webhook Error")
 	}
 
-	json, _ := json.Marshal(errorResponse{Error: err.Error()})
+	jsonResponse, _ := json.Marshal(errorResponse{Error: err.Error()})
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: statusCode,
-		Body:       string(json),
+		Body:       string(jsonResponse),
 	}, err
 }
 
-func sendToWebhook(request events.APIGatewayProxyRequest, err error) error {
-	if os.Getenv(mattermostWebhookEnv) == "" {
-		return fmt.Errorf("mattermost webhook URL var %s not set", mattermostWebhookEnv)
-	}
-
+func sendToWebhook(config *Config, request events.APIGatewayProxyRequest, err error) error {
 	fullMessage := fmt.Sprintf("Cloud Auth Failure\n---\nError: %s\nMethod: %s\nPath: %s\nRequest ID: %s\n",
 		err,
 		request.HTTPMethod,
@@ -208,12 +192,12 @@ func sendToWebhook(request events.APIGatewayProxyRequest, err error) error {
 		return err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, os.Getenv(mattermostWebhookEnv), bytes.NewReader(b))
+	httpRequest, err := http.NewRequest(http.MethodPost, config.MattermostWebhookURL, bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
 
-	client := http.Client{}
+	client := http.Client{Timeout: 5 * time.Second}
 	response, err := client.Do(httpRequest)
 	if err != nil {
 		return err
@@ -227,25 +211,13 @@ func sendToWebhook(request events.APIGatewayProxyRequest, err error) error {
 }
 
 func main() {
-	lambda.Start(validateCloudRequest)
-}
-
-func compileRegexes(expressions []string) []*regexp.Regexp {
-	var regexes []*regexp.Regexp
-	for _, expr := range expressions {
-		r, err := regexp.Compile(expr)
-		if err != nil {
-			log.Fatalf("Failed to compile regex: %v", err)
-		}
-		regexes = append(regexes, r)
+	initLogging()
+	config, err := loadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
-	return regexes
-}
 
-func getEnv(env string) string {
-	value := os.Getenv(env)
-	if value == "" {
-		log.Fatalf("Environment variable %s is not set", env)
-	}
-	return value
+	lambda.Start(func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		return validateCloudRequest(config, request)
+	})
 }

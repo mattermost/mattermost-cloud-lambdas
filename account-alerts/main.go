@@ -8,31 +8,16 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-	"time"
-
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/pkg/errors"
+	"os"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
-
-type clientConfig struct {
-	Client      *clientcmdapi.Config
-	ClusterName string
-	ContextName string
-	roleARN     string
-	sts         stsiface.STSAPI
-}
 
 type environmentVariables struct {
 	MinSubnetFreeIPs int64
@@ -76,34 +61,6 @@ func validateAndGetEnvVars() (*environmentVariables, error) {
 	envVars.MinSubnetFreeIPs = int64(number)
 
 	return envVars, nil
-}
-
-// newSession creates a new STS session
-func newSession() *session.Session {
-	config := aws.NewConfig()
-	config = config.WithCredentialsChainVerboseErrors(true)
-
-	opts := session.Options{
-		Config:                  *config,
-		SharedConfigState:       session.SharedConfigEnable,
-		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
-	}
-
-	stscreds.DefaultDuration = 30 * time.Minute
-
-	return session.Must(session.NewSessionWithOptions(opts))
-}
-
-// checkAuth checks the AWS access
-func checkAuth(stsAPI stsiface.STSAPI) (string, error) {
-	input := &sts.GetCallerIdentityInput{}
-	output, err := stsAPI.GetCallerIdentity(input)
-	if err != nil {
-		return "", errors.Wrap(err, "checking AWS STS access – cannot get role ARN for current session")
-	}
-	iamRoleARN := *output.Arn
-	log.Debugf("Role ARN for the current session is %s", iamRoleARN)
-	return iamRoleARN, nil
 }
 
 // getSetProvisioningSubnetIPLimits is used to get the Provisioning VPCs Subnet IP limits and set the CW metric data.
