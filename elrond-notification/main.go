@@ -1,10 +1,10 @@
 // Copyright (c) 2020 Mattermost, Inc. All Rights Reserved.
 // See License.txt for customer information.
-
 package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	pagerduty "github.com/PagerDuty/go-pagerduty"
+	"github.com/PagerDuty/go-pagerduty"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	elrond "github.com/mattermost/elrond/model"
@@ -178,8 +178,8 @@ func (attachment *mmAttachment) AddField(field mmField) *mmAttachment {
 
 func sendMattermostWebhook(webhookURL string, payload mmSlashResponse) error {
 	marshalContent, _ := json.Marshal(payload)
-	var jsonStr = []byte(marshalContent)
-	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
+	var jsonStr = marshalContent
+	req, _ := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
 	req.Header.Set("X-Custom-Header", "elrond-webhook-notifier")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -226,7 +226,7 @@ func sendPagerDutyNotification(payload *elrond.WebhookPayload) error {
 	}
 
 	// Send the event to PagerDuty
-	_, err := pagerduty.ManageEvent(event)
+	_, err := pagerduty.ManageEventWithContext(context.Background(), event)
 	if err != nil {
 		log.WithError(err).Error("Failed to send PagerDuty notification")
 		return errors.New("Failed to send PagerDuty notification")

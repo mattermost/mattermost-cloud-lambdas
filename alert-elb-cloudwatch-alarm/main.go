@@ -145,7 +145,7 @@ func sendPagerDutyNotification(messageNotification SNSMessageNotification) {
 	}
 
 	// Send the event to PagerDuty
-	_, err := pagerduty.ManageEvent(event)
+	_, err := pagerduty.ManageEventWithContext(context.TODO(), event)
 	if err != nil {
 		log.WithError(err).Error("Failed to send PagerDuty notification")
 		return
@@ -174,16 +174,14 @@ func closePagerDutyIncidents(messageNotification SNSMessageNotification) {
 
 	for {
 		// List incidents with current pagination options
-		res, err := client.ListIncidents(opts)
+		res, err := client.ListIncidentsWithContext(context.Background(), opts)
 		if err != nil {
-			log.WithError(err).Errorf("Error retrieving incidents: %v")
+			log.WithError(err).Errorf("Error retrieving incidents: %v", err)
 			break
 		}
 
 		// Process the incidents
-		for _, incident := range res.Incidents {
-			incidents = append(incidents, incident)
-		}
+		incidents = append(incidents, res.Incidents...)
 
 		// Check if we've retrieved all incidents
 		if opts.Offset+opts.Limit >= res.Total {

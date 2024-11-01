@@ -3,6 +3,7 @@ PACKAGE ?= $(HANDLER)
 GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
 GOARCH  ?= amd64
+GOLANGCILINT_VER := v1.61.0
 
 WORKDIR = $(CURDIR:$(GOPATH)%=/go%)
 ifeq ($(WORKDIR),$(CURDIR))
@@ -27,7 +28,6 @@ update-modules:
 	go get -u ./...
 	go mod tidy
 
-.PHONY: fmt
 ## fmt: Run go fmt on codebase
 fmt:
 	@echo Checking if code is formatted
@@ -44,7 +44,6 @@ fmt:
 		fi; \
 	  echo "gofmt success"; \
 
-.PHONY: lint
 ## lint: Run golangci-lint on codebase
 lint:
 	@echo "Linting..."
@@ -56,4 +55,9 @@ lint:
 	@echo Running golangci-lint
 	golangci-lint run ./...
 
-.PHONY: all build pack clean update-modules
+check-style: lint fmt
+
+lint-install:
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VER)
+
+.PHONY: all build pack clean update-modules lint fmt check-style lint-install

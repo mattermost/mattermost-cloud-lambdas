@@ -1,16 +1,37 @@
 
-run:
-  skip-dirs-use-default: false
-
 linters:
+  disable-all: true
   enable:
     - revive
     - gocyclo
     - misspell
+    - gofmt
+    - gosimple
+    - govet
+    - ineffassign
+    - predeclared
+    - staticcheck
+    - unconvert
+    - unused
 
 gocyclo:
   min-complexity: 15
 
 issues:
   exclude-use-default: false
+  exclude-dirs-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters-settings:
+  gofmt:
+    simplify: true
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+      - atomicalign
+
+
+
 

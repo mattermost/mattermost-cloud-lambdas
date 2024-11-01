@@ -100,7 +100,7 @@ func sendPagerDutyNotification(messageNotification SNSMessageNotification) {
 	}
 
 	// Send the event to PagerDuty
-	_, err := pagerduty.ManageEvent(event)
+	_, err := pagerduty.ManageEventWithContext(context.Background(), event)
 	if err != nil {
 		log.WithError(err).Error("Failed to send PagerDuty notification")
 		return
@@ -121,39 +121,29 @@ func closePagerDutyIncidents(messageNotification SNSMessageNotification) {
 	client := pagerduty.NewClient(apiKey)
 
 	var opts pagerduty.ListIncidentsOptions
-
-	opts.Limit = 25 // Set page size, max is often 100
-	opts.Offset = 0 // Start with the first page
+	opts.Limit = 25
+	opts.Offset = 0
 	opts.Total = true
 
 	var incidents []pagerduty.Incident
 
 	for {
-		// List incidents with current pagination options
-		res, err := client.ListIncidents(opts)
+		res, err := client.ListIncidentsWithContext(context.Background(), opts)
 		if err != nil {
-			log.WithError(err).Errorf("Error retrieving incidents: %v")
+			log.WithError(err).Error("Error retrieving incidents")
 			break
 		}
 
-		// Process the incidents
-		for _, incident := range res.Incidents {
-			incidents = append(incidents, incident)
-		}
+		incidents = append(incidents, res.Incidents...)
 
-		// Check if we've retrieved all incidents
 		if opts.Offset+opts.Limit >= res.Total {
-			break // Exit loop if we have retrieved all incidents
+			break
 		}
-		opts.Offset += opts.Limit // Prepare for the next page
+		opts.Offset += opts.Limit
 	}
 
 	for _, incident := range incidents {
-		// Check if incident description or details match your criteria
-		// This part is up to you on how you match incidents to your messageNotification
 		if incident.Description == messageNotification.EventMessage {
-			// Resolve the incident
-
 			_, err := client.ManageIncidentsWithContext(context.TODO(), email, []pagerduty.ManageIncidentsOptions{
 				{
 					ID:     incident.ID,

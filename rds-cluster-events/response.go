@@ -53,8 +53,8 @@ func (o *MMSlashResponse) ToJSON() string {
 
 func send(webhookURL string, payload MMSlashResponse) {
 	marshalContent, _ := json.Marshal(payload)
-	var jsonStr = []byte(marshalContent)
-	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
+	var jsonStr = marshalContent
+	req, _ := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
 	req.Header.Set("X-Custom-Header", "aws-sns")
 	req.Header.Set("Content-Type", "application/json")
 
