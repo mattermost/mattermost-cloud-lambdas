@@ -34,39 +34,40 @@ func handler(_ context.Context, autoScalingEvent events.AutoScalingEvent) {
 		vpcID, subNetID, err := getVpcSubNetID(instanceID)
 		if err != nil {
 			log.WithError(err).Errorf("Error getting the subnet from instanceID=%s", instanceID)
-			err := completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
+			err = completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
 			if err != nil {
-				return
+				log.WithError(err).Error("Failed to complete lifecycle action failure")
 			}
 			return
 		}
 		log.Infof("vpcID=%s Subnet=%s\n", vpcID, subNetID)
 
 		err = retry(5, 2*time.Second, func() error {
-			networkInterfaceID, err := getNetWorkInterface(vpcID, subNetID)
-			if err != nil {
-				log.WithError(err).Errorf("Error getting the network interface for instanceID=%s", instanceID)
-				return err
+			networkInterfaceID, innerErr := getNetWorkInterface(vpcID, subNetID)
+			if innerErr != nil {
+				log.WithError(innerErr).Errorf("Error getting the network interface for instanceID=%s", instanceID)
+				return innerErr
 			}
 			log.Infof("networkInterfaceID=%s\n", networkInterfaceID)
-			attachID, err := attachInterface(networkInterfaceID, instanceID)
-			if err != nil {
-				log.WithError(err).Errorf("Error attaching the network interface to instanceID=%s\n", instanceID)
-				return err
+
+			attachID, innerErr := attachInterface(networkInterfaceID, instanceID)
+			if innerErr != nil {
+				log.WithError(innerErr).Errorf("Error attaching the network interface to instanceID=%s", instanceID)
+				return innerErr
 			}
 			log.Infof("attachID=%s\n", attachID)
 			return nil
 		})
 
 		if err != nil {
-			err := completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
+			err = completeLifecycleActionFailure(lifecycleHookName, autoScalingGroupName, instanceID)
 			if err != nil {
-				return
+				log.WithError(err).Error("Failed to complete lifecycle action failure")
 			}
 		} else {
-			err := completeLifecycleActionSuccess(lifecycleHookName, autoScalingGroupName, instanceID)
+			err = completeLifecycleActionSuccess(lifecycleHookName, autoScalingGroupName, instanceID)
 			if err != nil {
-				return
+				log.WithError(err).Error("Failed to complete lifecycle action success")
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 // Copyright (c) 2020 Mattermost, Inc. All Rights Reserved.
 // See License.txt for customer information.
-
 package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -267,8 +267,11 @@ func (attachment *mmAttachment) AddField(field mmField) *mmAttachment {
 
 func sendMattermostWebhook(webhookURL string, payload mmSlashResponse) error {
 	marshalContent, _ := json.Marshal(payload)
-	var jsonStr = []byte(marshalContent)
+	var jsonStr = marshalContent
 	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("X-Custom-Header", "provisioner-webhook-notifier")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -315,7 +318,7 @@ func sendPagerDutyNotification(payload *cloud.WebhookPayload) error {
 	}
 
 	// Send the event to PagerDuty
-	_, err := pagerduty.ManageEvent(event)
+	_, err := pagerduty.ManageEventWithContext(context.Background(), event)
 	if err != nil {
 		log.WithError(err).Error("Failed to send PagerDuty notification")
 		return errors.New("Failed to send PagerDuty notification")

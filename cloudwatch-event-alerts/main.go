@@ -108,8 +108,9 @@ func sendPagerDutyNotification(snsMessage SNSMessage) {
 		},
 	}
 
-	// Send the event to PagerDuty
-	_, err := pagerduty.ManageEvent(event)
+	// Send the event to PagerDuty with context
+	ctx := context.Background()
+	_, err := pagerduty.ManageEventWithContext(ctx, event)
 	if err != nil {
 		log.WithError(err).Error("Failed to send PagerDuty notification")
 		return

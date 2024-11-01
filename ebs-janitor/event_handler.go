@@ -65,7 +65,7 @@ func (h *EventHandler) Handle(_ context.Context, event events.CloudWatchEvent) e
 		}
 		h.logger.WithFields(fields).Info("deleted volume")
 	}
-	h.logger.WithField("eventID", event.ID).Info("event processed succesfully")
+	h.logger.WithField("eventID", event.ID).Info("event processed successfully")
 	return nil
 }
 

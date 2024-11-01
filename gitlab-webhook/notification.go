@@ -6,23 +6,33 @@ import (
 	"net/http"
 	"os"
 
-	model "github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
 
 func send(webhookURL string, payload model.CommandResponse) error {
-	marshalContent, _ := json.Marshal(payload)
-	var jsonStr = []byte(marshalContent)
-	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
+	marshalContent, err := json.Marshal(payload)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal payload")
+	}
+
+	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(marshalContent))
+	if err != nil {
+		return errors.Wrap(err, "failed to create HTTP request")
+	}
 	req.Header.Set("X-Custom-Header", "aws-sns")
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "failed tο send HTTP request")
+		return errors.Wrap(err, "failed to send HTTP request")
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrapf(err, "unexpected response status: %s", resp.Status)
+	}
 
 	return nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -53,15 +54,19 @@ func (o *MMSlashResponse) ToJSON() string {
 
 func send(webhookURL string, payload MMSlashResponse) {
 	marshalContent, _ := json.Marshal(payload)
-	var jsonStr = []byte(marshalContent)
+	jsonStr := marshalContent
+
 	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		panic(errors.Wrap(err, "failed to create HTTP request"))
+	}
 	req.Header.Set("X-Custom-Header", "aws-sns")
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		panic(errors.Wrap(err, "failed to send HTTP request"))
 	}
 	defer resp.Body.Close()
 }

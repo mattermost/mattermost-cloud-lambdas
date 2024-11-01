@@ -104,7 +104,7 @@ func parseExtraLabels(extraLabelsRaw string) (model.LabelSet, error) {
 	}
 
 	if len(extraLabelsSplit)%2 != 0 {
-		return nil, fmt.Errorf(invalidExtraLabelsError)
+		return nil, errors.New(invalidExtraLabelsError)
 	}
 	for i := 0; i < len(extraLabelsSplit); i += 2 {
 		extractedLabels[model.LabelName("__extra_"+extraLabelsSplit[i])] = model.LabelValue(extraLabelsSplit[i+1])

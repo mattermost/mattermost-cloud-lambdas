@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/golang/mock/gomock"
-	"github.com/mattermost/mattermost-cloud-lambdas/tree/MM-38981-cleanup-unused-LBs/lambda-functions/mocks"
+	"github.com/mattermost/mattermost-cloud-lambdas/elb-cleanup/mocks"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,7 +38,7 @@ func TestHandle(t *testing.T) {
 		{
 			description: "List ELBs, failed to list ELBs",
 			ctx:         func() context.Context { return context.TODO() },
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListUnusedElb(gomock.Any()).
 					Return([]elbv2.LoadBalancer{}, errors.New("failed to list ELBs")).MaxTimes(1)
@@ -52,7 +52,7 @@ func TestHandle(t *testing.T) {
 		{
 			description: "Successful Delete ELBs",
 			ctx:         func() context.Context { return context.TODO() },
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListUnusedElb(gomock.Any()).
 					Return([]elbv2.LoadBalancer{
@@ -76,7 +76,7 @@ func TestHandle(t *testing.T) {
 		{
 			description: "List Classic , failed to list Classic LBs",
 			ctx:         func() context.Context { return context.TODO() },
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListUnUsedClassiclb(gomock.Any()).
 					Return([]*elb.LoadBalancerDescription{}, errors.New("failed to list Classic LBs")).MaxTimes(1)
@@ -89,7 +89,7 @@ func TestHandle(t *testing.T) {
 		{
 			description: "Successful Delete Classic ELBs",
 			ctx:         func() context.Context { return context.TODO() },
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListUnusedElb(gomock.Any()).
 					Return([]elbv2.LoadBalancer{
@@ -97,7 +97,7 @@ func TestHandle(t *testing.T) {
 					}, nil).MaxTimes(4)
 				awsResourcer.EXPECT().
 					ListUnUsedClassiclb(gomock.Any()).
-					Return([]*elb.LoadBalancerDescription{&elb.LoadBalancerDescription{LoadBalancerName: sampleLB.LoadBalancerName}}, nil).MaxTimes(2)
+					Return([]*elb.LoadBalancerDescription{{LoadBalancerName: sampleLB.LoadBalancerName}}, nil).MaxTimes(2)
 				awsResourcer.EXPECT().
 					DeleteClassiclb(gomock.Any(), sampleLB.LoadBalancerName).
 					Return(nil).MaxTimes(2)
@@ -112,11 +112,10 @@ func TestHandle(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
+		t.Run(testCase.description, func(_ *testing.T) {
 			testCase.setup(testCase.ctx())
 
 			err := eventHandler.Handle(testCase.ctx(), events.CloudWatchEvent{})
-			// fmt.Println("t: ", testCase.description)
 			testCase.expected(err)
 		})
 	}

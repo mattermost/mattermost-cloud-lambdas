@@ -1,3 +1,6 @@
+// Package main provides a Lambda function that handles GitLab webhook events,
+// specifically "Pipeline Hook" events, and sends notifications to Mattermost
+// based on the event's status.
 package main
 
 import (
@@ -46,7 +49,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 		handlePipelineEvent(webhookData)
 	default:
-		return sendErrorResponse(errors.Errorf("event %s not implemeted\n", eventType))
+		return sendErrorResponse(errors.Errorf("event %s not implemented", eventType))
 	}
 
 	return events.APIGatewayProxyResponse{

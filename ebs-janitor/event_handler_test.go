@@ -31,7 +31,7 @@ func TestHandle(t *testing.T) {
 			ctx: func() context.Context {
 				return context.TODO()
 			},
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListVolumes(gomock.Any(), gomock.Any()).
 					Return([]*ec2.Volume{}, errors.New("list resourcer error"))
@@ -46,7 +46,7 @@ func TestHandle(t *testing.T) {
 			ctx: func() context.Context {
 				return context.TODO()
 			},
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListVolumes(gomock.Any(), gomock.Any()).
 					Return([]*ec2.Volume{
@@ -68,7 +68,7 @@ func TestHandle(t *testing.T) {
 			ctx: func() context.Context {
 				return context.TODO()
 			},
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListVolumes(gomock.Any(), gomock.Any()).
 					Return([]*ec2.Volume{
@@ -93,7 +93,7 @@ func TestHandle(t *testing.T) {
 			ctx: func() context.Context {
 				return context.TODO()
 			},
-			setup: func(ctx context.Context) {
+			setup: func(_ context.Context) {
 				awsResourcer.EXPECT().
 					ListVolumes(gomock.Any(), gomock.Any()).
 					Return([]*ec2.Volume{
@@ -115,7 +115,7 @@ func TestHandle(t *testing.T) {
 	}
 
 	for _, v := range samples {
-		t.Run(v.description, func(t *testing.T) {
+		t.Run(v.description, func(_ *testing.T) {
 			v.setup(v.ctx())
 
 			err := eventHandler.Handle(v.ctx(), events.CloudWatchEvent{})
