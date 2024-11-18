@@ -267,3 +267,18 @@ jobs:
           LAMBDA_NAME: provisioner-notification
           AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+
+  upload-grant-privileges-to-schemas:
+    name: Upload grant-privileges-to-schemas function to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Lambda Upload
+        uses: ./.github/actions/upload-lambda
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          LAMBDA_NAME: grant-privileges-to-schemas
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
