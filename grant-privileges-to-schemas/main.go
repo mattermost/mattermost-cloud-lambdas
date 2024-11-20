@@ -119,8 +119,7 @@ func Handler(_ context.Context) error {
 
 	// Iterate through clusters and apply permissions
 	for _, cluster := range clusters {
-		clusterSecretName := fmt.Sprintf("rds-cluster-multitenant-%s", cluster)
-		clusterDBPassword, err := GetSecret(clusterSecretName)
+		clusterDBPassword, err := GetSecret(cluster)
 		if err != nil {
 			log.Printf("Failed to retrieve DB password for cluster %s: %v", cluster, err)
 			continue
