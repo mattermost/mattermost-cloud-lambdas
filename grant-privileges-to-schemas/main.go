@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	_ "github.com/lib/pq"
 )
@@ -30,7 +31,6 @@ var (
 	provisionerDBURL  = os.Getenv("PROVISIONER_DB_URL")
 	provisionerDBUser = os.Getenv("PROVISIONER_DB_USER")
 	excludedClusters  = strings.Split(os.Getenv("EXCLUDED_CLUSTERS"), ",") // Comma-separated list
-
 )
 
 // Secrets manager client
@@ -63,6 +63,30 @@ func isExcludedCluster(clusterName string) bool {
 	return false
 }
 
+// Fetch all RDS clusters from the AWS account with the specified prefix
+func fetchRDSClusters(prefix string) ([]string, error) {
+	sess := session.Must(session.NewSession())
+	rdsClient := rds.New(sess)
+
+	input := &rds.DescribeDBClustersInput{}
+	output, err := rdsClient.DescribeDBClusters(input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe RDS clusters: %w", err)
+	}
+
+	var matchingClusters []string
+	for _, cluster := range output.DBClusters {
+		if cluster.DBClusterIdentifier != nil && strings.HasPrefix(*cluster.DBClusterIdentifier, prefix) {
+			if isExcludedCluster(*cluster.DBClusterIdentifier) {
+				continue
+			}
+			matchingClusters = append(matchingClusters, *cluster.DBClusterIdentifier)
+		}
+	}
+
+	return matchingClusters, nil
+}
+
 // Handler function for Lambda
 func Handler(_ context.Context) error {
 	// Retrieve provisioner DB password
@@ -88,18 +112,13 @@ func Handler(_ context.Context) error {
 	}
 
 	// Fetch all clusters with the "rds-cluster-multitenant" prefix
-	clusters, err := fetchClusters(provisionerDB)
+	clusters, err := fetchRDSClusters("rds-cluster-multitenant")
 	if err != nil {
 		return fmt.Errorf("failed to fetch clusters: %w", err)
 	}
 
 	// Iterate through clusters and apply permissions
 	for _, cluster := range clusters {
-		if !strings.HasPrefix(cluster, "rds-cluster-multitenant") || isExcludedCluster(cluster) {
-			continue
-		}
-
-		// Retrieve the cluster's DB password from Secrets Manager
 		clusterSecretName := fmt.Sprintf("rds-cluster-multitenant-%s", cluster)
 		clusterDBPassword, err := GetSecret(clusterSecretName)
 		if err != nil {
@@ -107,7 +126,6 @@ func Handler(_ context.Context) error {
 			continue
 		}
 
-		// Apply permissions to the cluster
 		if err := applyPermissions(cluster, dbUsername, clusterDBPassword, provisionerDB, activityDate); err != nil {
 			log.Printf("Failed to apply permissions for cluster %s: %v", cluster, err)
 		}
@@ -127,37 +145,11 @@ func getActivityDate() (int64, error) {
 		dateStr = "2020-09-01"
 	}
 
-	// Parse the date and convert to UTC milliseconds
 	parsedDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		return 0, fmt.Errorf("invalid date format: %w", err)
 	}
 	return parsedDate.UTC().UnixMilli(), nil
-}
-
-// Fetch all clusters from the provisioner database
-func fetchClusters(provisionerDB *sql.DB) ([]string, error) {
-	query := `SELECT cluster_name FROM clusters WHERE cluster_name LIKE 'rds-cluster-multitenant%';`
-	rows, err := provisionerDB.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query clusters: %w", err)
-	}
-	defer rows.Close()
-
-	var clusters []string
-	for rows.Next() {
-		var clusterName string
-		if scanErr := rows.Scan(&clusterName); scanErr != nil {
-			return nil, fmt.Errorf("failed to scan cluster name: %w", scanErr)
-		}
-		clusters = append(clusters, clusterName)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows iteration error: %w", err)
-	}
-
-	return clusters, nil
 }
 
 // Apply permissions on the target cluster
@@ -169,13 +161,11 @@ func applyPermissions(cluster, username, password string, provisionerDB *sql.DB,
 	}
 	defer db.Close()
 
-	// Fetch eligible schemas from provisionerDB with activityDate filter
 	schemas, err := fetchEligibleSchemas(provisionerDB, activityDate)
 	if err != nil {
 		return fmt.Errorf("failed to fetch eligible schemas for cluster %s: %w", cluster, err)
 	}
 
-	// Apply permissions to each schema
 	for _, schema := range schemas {
 		if err := grantSchemaPermissions(db, schema, readerUser, writerUser); err != nil {
 			log.Printf("Failed to apply permissions on schema %s in cluster %s: %v", schema, cluster, err)
@@ -213,7 +203,6 @@ func fetchEligibleSchemas(provisionerDB *sql.DB, activityDate int64) ([]string, 
 
 // Grant permissions to reader and writer users on the schema and tables
 func grantSchemaPermissions(db *sql.DB, schema, readerUser, writerUser string) error {
-	// Grant USAGE and SELECT to readerUser
 	if _, err := db.Exec(fmt.Sprintf("GRANT USAGE ON SCHEMA %s TO %s;", schema, readerUser)); err != nil {
 		return fmt.Errorf("failed to grant USAGE on schema %s to %s: %w", schema, readerUser, err)
 	}
@@ -221,7 +210,6 @@ func grantSchemaPermissions(db *sql.DB, schema, readerUser, writerUser string) e
 		return fmt.Errorf("failed to grant SELECT on schema %s tables to %s: %w", schema, readerUser, err)
 	}
 
-	// Grant full permissions to writerUser
 	if _, err := db.Exec(fmt.Sprintf("GRANT USAGE, CREATE ON SCHEMA %s TO %s;", schema, writerUser)); err != nil {
 		return fmt.Errorf("failed to grant USAGE, CREATE on schema %s to %s: %w", schema, writerUser, err)
 	}
