@@ -1,5 +1,6 @@
-// Package main provides a Lambda function to manage PostgreSQL permissions
-// based on schema creation dates and a set of configurable parameters.
+// Package main provides a Lambda function to manage PostgreSQL permissions for schemas and databases
+// within multi-tenant RDS clusters. It fetches credentials, logical database mappings, and applies
+// appropriate permissions for reader and writer roles.
 package main
 
 import (
@@ -30,7 +31,7 @@ var (
 	environment       = os.Getenv("ENVIRONMENT")
 	provisionerDBURL  = os.Getenv("PROVISIONER_DB_URL")
 	provisionerDBUser = os.Getenv("PROVISIONER_DB_USER")
-	excludedClusters  = strings.Split(os.Getenv("EXCLUDED_CLUSTERS"), ",") // Comma-separated list
+	excludedClusters  = parseExcludedClusters(os.Getenv("EXCLUDED_CLUSTERS"))
 )
 
 // Secrets manager client
@@ -41,7 +42,26 @@ func init() {
 	smClient = secretsmanager.New(sess)
 }
 
-// GetSecret retrieves the secret value from AWS Secrets Manager
+// parseExcludedClusters parses a comma-separated list of excluded clusters.
+func parseExcludedClusters(excluded string) map[string]struct{} {
+	clusters := strings.Split(excluded, ",")
+	excludedMap := make(map[string]struct{})
+	for _, cluster := range clusters {
+		trimmed := strings.TrimSpace(cluster)
+		if trimmed != "" {
+			excludedMap[trimmed] = struct{}{}
+		}
+	}
+	return excludedMap
+}
+
+// isExcludedCluster checks if a cluster is in the excluded list.
+func isExcludedCluster(cluster string) bool {
+	_, exists := excludedClusters[cluster]
+	return exists
+}
+
+// GetSecret retrieves the secret value from AWS Secrets Manager.
 func GetSecret(secretName string) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(secretName),
@@ -53,88 +73,7 @@ func GetSecret(secretName string) (string, error) {
 	return *result.SecretString, nil
 }
 
-// Check if a cluster should be excluded
-func isExcludedCluster(clusterName string) bool {
-	for _, excluded := range excludedClusters {
-		if strings.TrimSpace(clusterName) == excluded {
-			return true
-		}
-	}
-	return false
-}
-
-// Fetch all RDS clusters from the AWS account with the specified prefix
-func fetchRDSClusters(prefix string) ([]string, error) {
-	sess := session.Must(session.NewSession())
-	rdsClient := rds.New(sess)
-
-	input := &rds.DescribeDBClustersInput{}
-	output, err := rdsClient.DescribeDBClusters(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe RDS clusters: %w", err)
-	}
-
-	var matchingClusters []string
-	for _, cluster := range output.DBClusters {
-		if cluster.DBClusterIdentifier != nil && strings.HasPrefix(*cluster.DBClusterIdentifier, prefix) {
-			if isExcludedCluster(*cluster.DBClusterIdentifier) {
-				continue
-			}
-			matchingClusters = append(matchingClusters, *cluster.DBClusterIdentifier)
-		}
-	}
-
-	return matchingClusters, nil
-}
-
-// Handler function for Lambda
-func Handler(_ context.Context) error {
-	// Retrieve provisioner DB password
-	provisionerSecretName := fmt.Sprintf("provisioner-%s", environment)
-	provisionerDBPassword, err := GetSecret(provisionerSecretName)
-	if err != nil {
-		return fmt.Errorf("failed to get provisioner DB password: %w", err)
-	}
-
-	// Connect to provisioner database
-	provisionerConnStr := fmt.Sprintf("host=%s user=%s password=%s dbname=cloud sslmode=disable",
-		provisionerDBURL, provisionerDBUser, provisionerDBPassword)
-	provisionerDB, err := sql.Open("postgres", provisionerConnStr)
-	if err != nil {
-		return fmt.Errorf("failed to connect to provisioner database: %w", err)
-	}
-	defer provisionerDB.Close()
-
-	// Get the activity date in UTC milliseconds
-	activityDate, err := getActivityDate()
-	if err != nil {
-		return fmt.Errorf("failed to parse activity date: %w", err)
-	}
-
-	// Fetch all clusters with the "rds-cluster-multitenant" prefix
-	clusters, err := fetchRDSClusters("rds-cluster-multitenant")
-	if err != nil {
-		return fmt.Errorf("failed to fetch clusters: %w", err)
-	}
-
-	// Iterate through clusters and apply permissions
-	for _, cluster := range clusters {
-		clusterDBPassword, err := GetSecret(cluster)
-		if err != nil {
-			log.Printf("Failed to retrieve DB password for cluster %s: %v", cluster, err)
-			continue
-		}
-
-		if err := applyPermissions(cluster, dbUsername, clusterDBPassword, provisionerDB, activityDate); err != nil {
-			log.Printf("Failed to apply permissions for cluster %s: %v", cluster, err)
-		}
-	}
-
-	log.Println("Permissions successfully granted across all applicable clusters.")
-	return nil
-}
-
-// Get the activity date as UTC milliseconds from the environment
+// getActivityDate retrieves and parses the activity date.
 func getActivityDate() (int64, error) {
 	dateStr := os.Getenv("ACTIVITY_DATE")
 
@@ -151,75 +90,165 @@ func getActivityDate() (int64, error) {
 	return parsedDate.UTC().UnixMilli(), nil
 }
 
-// Apply permissions on the target cluster
-func applyPermissions(cluster, username, password string, provisionerDB *sql.DB, activityDate int64) error {
-	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=postgres sslmode=disable", cluster, username, password)
-	db, err := sql.Open("postgres", connStr)
+// getWriterEndpoint fetches the writer endpoint for a given RDS cluster.
+func getWriterEndpoint(clusterIdentifier string) (string, error) {
+	sess := session.Must(session.NewSession())
+	rdsClient := rds.New(sess)
+
+	input := &rds.DescribeDBClustersInput{
+		DBClusterIdentifier: aws.String(clusterIdentifier),
+	}
+	output, err := rdsClient.DescribeDBClusters(input)
 	if err != nil {
-		return fmt.Errorf("failed to connect to cluster %s: %w", cluster, err)
-	}
-	defer db.Close()
-
-	schemas, err := fetchEligibleSchemas(provisionerDB, activityDate)
-	if err != nil {
-		return fmt.Errorf("failed to fetch eligible schemas for cluster %s: %w", cluster, err)
+		return "", fmt.Errorf("failed to describe RDS cluster %s: %w", clusterIdentifier, err)
 	}
 
-	for _, schema := range schemas {
-		if err := grantSchemaPermissions(db, schema, readerUser, writerUser); err != nil {
-			log.Printf("Failed to apply permissions on schema %s in cluster %s: %v", schema, cluster, err)
-		}
+	if len(output.DBClusters) == 0 || output.DBClusters[0].Endpoint == nil {
+		return "", fmt.Errorf("writer endpoint not found for cluster %s", clusterIdentifier)
 	}
 
-	log.Printf("Permissions applied for cluster %s", cluster)
-	return nil
+	return *output.DBClusters[0].Endpoint, nil
 }
 
-// Fetch eligible schemas based on activityDate from the provisionerDB
-func fetchEligibleSchemas(provisionerDB *sql.DB, activityDate int64) ([]string, error) {
-	query := `SELECT name FROM public.databaseschema WHERE createat >= $1 AND deleteat = 0 AND name LIKE 'id_%';`
+// fetchSchemasAndClusters retrieves schema-to-database and database-to-cluster mappings.
+func fetchSchemasAndClusters(provisionerDB *sql.DB, activityDate int64) (map[string]string, map[string]string, error) {
+	query := `
+		SELECT 
+		    ds.name AS schema_name, 
+		    ld.id AS logical_database_id, 
+		    mt.rdsclusterid AS rds_cluster_id
+		FROM 
+		    public.databaseschema ds
+		JOIN 
+		    public.logicaldatabase ld 
+		    ON ds.logicaldatabaseid = ld.id
+		JOIN 
+		    public.multitenantdatabase mt 
+		    ON ld.multitenantdatabaseid = mt.id
+		WHERE 
+		    ds.createat >= $1 
+		    AND ds.deleteat = 0 
+		    AND ds.name LIKE 'id_%';`
+
 	rows, err := provisionerDB.Query(query, activityDate)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query schemas: %w", err)
+		return nil, nil, fmt.Errorf("failed to query schemas: %w", err)
 	}
 	defer rows.Close()
 
-	var schemas []string
+	schemaToDB := make(map[string]string)  // Map schema name to logical database
+	dbToCluster := make(map[string]string) // Map logical database to RDS cluster ID
+
 	for rows.Next() {
-		var schema string
-		if scanErr := rows.Scan(&schema); scanErr != nil {
-			return nil, fmt.Errorf("failed to scan schema name: %w", scanErr)
+		var schemaName, logicalDatabaseID, rdsClusterID string
+		if err := rows.Scan(&schemaName, &logicalDatabaseID, &rdsClusterID); err != nil {
+			return nil, nil, fmt.Errorf("failed to scan schema row: %w", err)
 		}
-		schemas = append(schemas, schema)
+
+		logicalDatabase := fmt.Sprintf("cloud_%s", logicalDatabaseID)
+		schemaToDB[schemaName] = logicalDatabase
+		dbToCluster[logicalDatabase] = rdsClusterID
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows iteration error: %w", err)
-	}
-
-	return schemas, nil
+	return schemaToDB, dbToCluster, nil
 }
 
-// Grant permissions to reader and writer users on the schema and tables
-func grantSchemaPermissions(db *sql.DB, schema, readerUser, writerUser string) error {
-	if _, err := db.Exec(fmt.Sprintf("GRANT USAGE ON SCHEMA %s TO %s;", schema, readerUser)); err != nil {
-		return fmt.Errorf("failed to grant USAGE on schema %s to %s: %w", schema, readerUser, err)
-	}
-	if _, err := db.Exec(fmt.Sprintf("GRANT SELECT ON ALL TABLES IN SCHEMA %s TO %s;", schema, readerUser)); err != nil {
-		return fmt.Errorf("failed to grant SELECT on schema %s tables to %s: %w", schema, readerUser, err)
+// applyPermissionsToDatabase applies the necessary permissions to schemas and tables.
+func applyPermissionsToDatabase(db *sql.DB, schemas map[string]string, logicalDatabase string, cluster string) error {
+	for schema, targetDB := range schemas {
+		if targetDB != logicalDatabase {
+			continue
+		}
+
+		log.Printf("Running privileges on schema %s which lives in %s, in cluster %s", schema, logicalDatabase, cluster)
+
+		// Grant permissions for reader user
+		if _, err := db.Exec(fmt.Sprintf("GRANT USAGE ON SCHEMA %s TO %s;", schema, readerUser)); err != nil {
+			log.Printf("Failed to grant USAGE on schema %s to %s: %v", schema, readerUser, err)
+		} else {
+			log.Printf("Granted USAGE on schema %s to %s", schema, readerUser)
+		}
+
+		if _, err := db.Exec(fmt.Sprintf("GRANT SELECT ON ALL TABLES IN SCHEMA %s TO %s;", schema, readerUser)); err != nil {
+			log.Printf("Failed to grant SELECT on all tables in schema %s to %s: %v", schema, readerUser, err)
+		} else {
+			log.Printf("Granted SELECT on all tables in schema %s to %s", schema, readerUser)
+		}
+
+		// Grant permissions for writer user
+		if _, err := db.Exec(fmt.Sprintf("GRANT USAGE, CREATE ON SCHEMA %s TO %s;", schema, writerUser)); err != nil {
+			log.Printf("Failed to grant USAGE, CREATE on schema %s to %s: %v", schema, writerUser, err)
+		} else {
+			log.Printf("Granted USAGE, CREATE on schema %s to %s", schema, writerUser)
+		}
+
+		if _, err := db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %s TO %s;", schema, writerUser)); err != nil {
+			log.Printf("Failed to grant ALL PRIVILEGES on all tables in schema %s to %s: %v", schema, writerUser, err)
+		} else {
+			log.Printf("Granted ALL PRIVILEGES on all tables in schema %s to %s", schema, writerUser)
+		}
 	}
 
-	if _, err := db.Exec(fmt.Sprintf("GRANT USAGE, CREATE ON SCHEMA %s TO %s;", schema, writerUser)); err != nil {
-		return fmt.Errorf("failed to grant USAGE, CREATE on schema %s to %s: %w", schema, writerUser, err)
-	}
-	if _, err := db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %s TO %s;", schema, writerUser)); err != nil {
-		return fmt.Errorf("failed to grant ALL PRIVILEGES on schema %s tables to %s: %w", schema, writerUser, err)
-	}
-	if _, err := db.Exec(fmt.Sprintf("GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA %s TO %s;", schema, writerUser)); err != nil {
-		return fmt.Errorf("failed to grant EXECUTE on schema %s functions to %s: %w", schema, writerUser, err)
+	return nil
+}
+
+// Handler is the main entry point for the Lambda function.
+func Handler(_ context.Context) error {
+	provisionerSecret := fmt.Sprintf("provisioner-%s", environment)
+	provisionerPassword, err := GetSecret(provisionerSecret)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve provisioner DB password: %w", err)
 	}
 
-	log.Printf("Permissions granted on schema %s to %s and %s", schema, readerUser, writerUser)
+	provisionerConnStr := fmt.Sprintf("host=%s user=%s password=%s dbname=cloud sslmode=disable", provisionerDBURL, provisionerDBUser, provisionerPassword)
+	provisionerDB, err := sql.Open("postgres", provisionerConnStr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to provisioner database: %w", err)
+	}
+	defer provisionerDB.Close()
+
+	activityDate, err := getActivityDate()
+	if err != nil {
+		return fmt.Errorf("failed to parse activity date: %w", err)
+	}
+
+	schemaToDB, dbToCluster, err := fetchSchemasAndClusters(provisionerDB, activityDate)
+	if err != nil {
+		return fmt.Errorf("failed to fetch schemas and clusters: %w", err)
+	}
+
+	for logicalDatabase, cluster := range dbToCluster {
+		if isExcludedCluster(cluster) {
+			log.Printf("Skipping excluded cluster %s", cluster)
+			continue
+		}
+
+		writerEndpoint, err := getWriterEndpoint(cluster)
+		if err != nil {
+			log.Printf("Failed to retrieve writer endpoint for cluster %s: %v", cluster, err)
+			continue
+		}
+
+		password, err := GetSecret(cluster)
+		if err != nil {
+			log.Printf("Failed to retrieve password for cluster %s: %v", cluster, err)
+			continue
+		}
+
+		connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", writerEndpoint, dbUsername, password, logicalDatabase)
+		db, err := sql.Open("postgres", connStr)
+		if err != nil {
+			log.Printf("Failed to connect to logical database %s: %v", logicalDatabase, err)
+			continue
+		}
+		defer db.Close()
+
+		if err := applyPermissionsToDatabase(db, schemaToDB, logicalDatabase, cluster); err != nil {
+			log.Printf("Failed to apply permissions to database %s: %v", logicalDatabase, err)
+		}
+	}
+
+	log.Println("Permissions successfully applied across all databases and clusters.")
 	return nil
 }
 
