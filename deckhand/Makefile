@@ -2,7 +2,7 @@ HANDLER ?= bootstrap
 PACKAGE ?= $(HANDLER)
 GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
-GOARCH  ?= amd64
+GOARCH  ?= arm64
 GOLANGCILINT_VER := v1.61.0
 
 WORKDIR = $(CURDIR:$(GOPATH)%=/go%)
