@@ -3,7 +3,7 @@ HANDLER ?= bootstrap
 PACKAGE ?= $(HANDLER)
 GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
-GOARCH  ?= amd64
+GOARCH  ?= arm64
 GO_TEST_FLAGS ?= -race
 GOLANGCILINT_VER := v1.61.0
 
