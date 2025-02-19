@@ -9,6 +9,7 @@ on:
       - main
 jobs:
   upload-dev-lambdas:
+    if: github.actor != 'dependabot[bot]'
     uses: ./.github/workflows/upload-lambdas-template.yml
     with:
       environment: dev
