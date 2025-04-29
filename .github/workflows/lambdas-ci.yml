@@ -1,0 +1,45 @@
+name: Upload Lambdas to S3
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environments:
+        description: "Comma-separated environments to deploy (e.g. dev,test,prod)"
+        required: false
+        default: "dev,test,core,shared-services,data-engineering,prod"
+
+jobs:
+  upload-lambdas:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: dev
+            aws_account_id: ${{ secrets.DEV_AWS_ACCOUNT_ID }}
+          - environment: test
+            aws_account_id: ${{ secrets.TEST_AWS_ACCOUNT_ID }}
+          - environment: core
+            aws_account_id: ${{ secrets.CORE_AWS_ACCOUNT_ID }}
+          - environment: shared-services
+            aws_account_id: ${{ secrets.SHARED_AWS_ACCOUNT_ID }}
+          - environment: data-engineering
+            aws_account_id: ${{ secrets.DATA_ENGINEERING_AWS_ACCOUNT_ID }}
+          - environment: prod
+            aws_account_id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
+
+    # Only include envs specified by dispatch input, or all on push
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.inputs.environments, matrix.environment)
+
+    steps:
+      - name: Call Upload Lambdas Reusable Workflow
+        uses: ./.github/workflows/upload-lambdas-template.yml
+        with:
+          environment: ${{ matrix.environment }}
+        secrets:
+          aws_account_id: ${{ matrix.aws_account_id }}
