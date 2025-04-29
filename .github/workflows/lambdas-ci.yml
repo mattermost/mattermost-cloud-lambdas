@@ -17,29 +17,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - environment: dev
-            aws_account_id: ${{ secrets.DEV_AWS_ACCOUNT_ID }}
-          - environment: test
-            aws_account_id: ${{ secrets.TEST_AWS_ACCOUNT_ID }}
-          - environment: core
-            aws_account_id: ${{ secrets.CORE_AWS_ACCOUNT_ID }}
-          - environment: shared-services
-            aws_account_id: ${{ secrets.SHARED_AWS_ACCOUNT_ID }}
-          - environment: data-engineering
-            aws_account_id: ${{ secrets.DATA_ENGINEERING_AWS_ACCOUNT_ID }}
-          - environment: prod
-            aws_account_id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
+        environment: [dev, test, core, shared-services, data-engineering, prod]
 
-    # Only include envs specified by dispatch input, or all on push
     if: |
       github.event_name == 'push' ||
       contains(github.event.inputs.environments, matrix.environment)
 
     steps:
+      - name: Map environment to account ID
+        id: map
+        run: |
+          case "${{ matrix.environment }}" in
+            dev) echo "aws_account_id=${{ secrets.DEV_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT ;;
+            test) echo "aws_account_id=${{ secrets.TEST_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT ;;
+            core) echo "aws_account_id=${{ secrets.CORE_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT ;;
+            shared-services) echo "aws_account_id=${{ secrets.SHARED_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT ;;
+            data-engineering) echo "aws_account_id=${{ secrets.DATA_ENGINEERING_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT ;;
+            prod) echo "aws_account_id=${{ secrets.PROD_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT ;;
+            *) echo "Unknown environment: ${{ matrix.environment }}" && exit 1 ;;
+          esac
+
       - name: Call Upload Lambdas Reusable Workflow
         uses: ./.github/workflows/upload-lambdas-template.yml
         with:
           environment: ${{ matrix.environment }}
         secrets:
-          aws_account_id: ${{ matrix.aws_account_id }}
+          aws_account_id: ${{ steps.map.outputs.aws_account_id }}
+
