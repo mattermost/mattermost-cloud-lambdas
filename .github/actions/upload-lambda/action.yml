@@ -1,5 +1,5 @@
 name: upload-lambda-action
-description: Reusable action to upload Lambdas to S3
+description: Reusable action to build and upload Lambda to S3
 
 runs:
   using: composite
@@ -17,14 +17,13 @@ runs:
 
     - name: Extract branch name
       shell: bash
-      run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >>$GITHUB_OUTPUT # replace / with -
       id: extract_branch
+      run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >> $GITHUB_OUTPUT
 
-    - name: Upload test version to S3
-      uses: jakejarvis/s3-sync-action@master
-      env:
-        AWS_S3_BUCKET: 'mattermost-cloud-lambdas-${{ env.ENVIRONMENT }}'
-        AWS_ACCESS_KEY_ID: '${{ env.AWS_ACCESS_KEY_ID }}'
-        AWS_SECRET_ACCESS_KEY: '${{ env.AWS_SECRET_ACCESS_KEY }}'
-        SOURCE_DIR: '${{ env.LAMBDA_NAME }}/zip'
-        DEST_DIR: '${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}'
+    - name: Upload to S3 (official AWS sync)
+      uses: aws-actions/s3-sync@f2701ae75301088999913e7d758ec7d4dfbaf8d3 # v1.2.1
+      with:
+        bucket: mattermost-cloud-lambdas-${{ env.ENVIRONMENT }}
+        source-dir: ${{ env.LAMBDA_NAME }}/zip
+        destination-dir: ${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}
+
