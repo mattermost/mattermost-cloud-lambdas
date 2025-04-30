@@ -63,5 +63,3 @@ jobs:
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           LAMBDA_NAME: ${{ matrix.lambda }}
-
-  
