@@ -13,18 +13,17 @@ on:
 
 jobs:
   upload-lambdas:
-    uses: ./.github/workflows/upload-lambdas-template.yml
-    with:
-      environment: ${{ matrix.environment }}
-      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
     strategy:
       fail-fast: false
       matrix:
         environment: [dev, test, core, shared-services, data-engineering, prod]
-
     if: |
       github.event_name == 'push' ||
       contains(github.event.inputs.environments, matrix.environment)
+    uses: ./.github/workflows/upload-lambdas-template.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets: inherit
 
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
