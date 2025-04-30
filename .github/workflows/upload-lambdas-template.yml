@@ -15,9 +15,9 @@ permissions:
   id-token: write
   contents: read
 
-jobs:
-  upload-lambdas:
+upload-lambdas:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     strategy:
       fail-fast: false
       matrix:
@@ -52,7 +52,7 @@ jobs:
           echo "Role ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role
