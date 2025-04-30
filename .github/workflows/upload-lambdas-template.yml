@@ -7,7 +7,7 @@ on:
         required: true
         type: string
     secrets:
-      aws_account_id:
+      AWS_ACCOUNT_ID:
         required: true
         description: "AWS Account ID to assume role in"
 
@@ -47,16 +47,15 @@ jobs:
 
       - name: Debug Role ARN
         run: |
-          echo "AWS Account ID: ${{ secrets.aws_account_id }}"
+          echo "AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
           echo "Environment: ${{ inputs.environment }}"
-          echo "Role ARN: arn:aws:iam::${{ secrets.aws_account_id }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role"
+          echo "Role ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: us-east-1
-          role-to-assume: arn:aws:iam::${{ secrets.aws_account_id }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role
-          mask-aws-account-id: true
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role
 
       - name: Upload Lambda
         uses: ./.github/actions/upload-lambda
