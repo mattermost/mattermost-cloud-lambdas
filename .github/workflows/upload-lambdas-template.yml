@@ -38,10 +38,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@5126516654c75f76bca1de45dd82a3006d8890f9
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@5fd3084ed1ba1ccb603c8a5f29a07e6a88844ad3
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::${{ secrets.aws_account_id }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role

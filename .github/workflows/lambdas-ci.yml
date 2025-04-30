@@ -13,6 +13,10 @@ on:
 
 jobs:
   upload-lambdas:
+    uses: ./.github/workflows/upload-lambdas-template.yml
+    with:
+      environment: ${{ matrix.environment }}
+      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
     strategy:
       fail-fast: false
       matrix:
@@ -24,11 +28,5 @@ jobs:
 
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
+       
 
-    steps:
-      - name: Call Upload Lambdas Reusable Workflow
-        uses: ./.github/workflows/upload-lambdas-template.yml
-        with:
-          environment: ${{ matrix.environment }}
-        secrets:
-          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
