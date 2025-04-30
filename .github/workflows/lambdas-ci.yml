@@ -12,14 +12,28 @@ on:
         default: "dev,test,core,shared-services,data-engineering,prod"
 
 jobs:
+  determine-environments:
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.set-environments.outputs.environments }}
+    steps:
+      - id: set-environments
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "environments=['dev', 'test', 'core', 'shared-services', 'data-engineering', 'prod']" >> $GITHUB_OUTPUT
+          else
+            # Convert comma-separated string to JSON array
+            IFS=',' read -ra ENV_ARRAY <<< "${{ github.event.inputs.environments }}"
+            JSON_ARRAY=$(printf "'%s'," "${ENV_ARRAY[@]}" | sed 's/,$//')
+            echo "environments=[$JSON_ARRAY]" >> $GITHUB_OUTPUT
+          fi
+
   upload-lambdas:
+    needs: determine-environments
     strategy:
       fail-fast: false
       matrix:
-        environment: [dev, test, core, shared-services, data-engineering, prod]
-    if: |
-      github.event_name == 'push' ||
-      contains(github.event.inputs.environments, matrix.environment)
+        environment: ${{ fromJson(needs.determine-environments.outputs.environments) }}
     uses: ./.github/workflows/upload-lambdas-template.yml
     with:
       environment: ${{ matrix.environment }}
