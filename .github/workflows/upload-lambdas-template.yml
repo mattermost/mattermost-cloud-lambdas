@@ -15,7 +15,8 @@ permissions:
   id-token: write
   contents: read
 
-upload-lambdas:
+jobs:
+  upload-lambdas:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     strategy:
@@ -63,3 +64,4 @@ upload-lambdas:
           ENVIRONMENT: ${{ inputs.environment }}
           LAMBDA_NAME: ${{ matrix.lambda }}
 
+  
