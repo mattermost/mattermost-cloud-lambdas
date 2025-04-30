@@ -25,7 +25,3 @@ jobs:
       environment: ${{ matrix.environment }}
     secrets: inherit
 
-    runs-on: ubuntu-latest
-    environment: ${{ matrix.environment }}
-       
-
