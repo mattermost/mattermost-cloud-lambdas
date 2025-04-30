@@ -37,5 +37,6 @@ jobs:
     uses: ./.github/workflows/upload-lambdas-template.yml
     with:
       environment: ${{ matrix.environment }}
-    secrets: inherit
+    secrets:
+      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
