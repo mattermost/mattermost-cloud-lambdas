@@ -7,12 +7,18 @@ on:
         required: true
         type: string
     secrets:
-      aws_account_id:
+      AWS_ACCOUNT_ID:
         required: true
+        description: "AWS Account ID to assume role in"
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   upload-lambdas:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     strategy:
       fail-fast: false
       matrix:
@@ -38,17 +44,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@5126516654c75f76bca1de45dd82a3006d8890f9
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Debug Role ARN
+        run: |
+          echo "AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Role ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722
         with:
           aws-region: us-east-1
-          role-to-assume: arn:aws:iam::${{ secrets.aws_account_id }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role
 
       - name: Upload Lambda
         uses: ./.github/actions/upload-lambda
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           LAMBDA_NAME: ${{ matrix.lambda }}
-
