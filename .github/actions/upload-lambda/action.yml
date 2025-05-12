@@ -18,12 +18,11 @@ runs:
     - name: Extract branch name
       shell: bash
       id: extract_branch
-      run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >> $GITHUB_OUTPUT
+      run: |
+        echo "branch=$(echo \"${GITHUB_REF_NAME//\//-}\")" >> $GITHUB_OUTPUT
 
     - name: Sync Lambda ZIP to S3
       run: |
         aws s3 sync \
           "${{ env.LAMBDA_NAME }}/zip" \
           "s3://mattermost-cloud-lambdas-${{ env.ENVIRONMENT }}/${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}"
-
-

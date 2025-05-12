@@ -38,5 +38,5 @@ jobs:
     with:
       environment: ${{ matrix.environment }}
     secrets:
-      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
