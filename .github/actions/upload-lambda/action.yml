@@ -20,10 +20,10 @@ runs:
       id: extract_branch
       run: echo "branch=$(echo "${GITHUB_REF_NAME/\//-}")" >> $GITHUB_OUTPUT
 
-    - name: Upload to S3 (official AWS sync)
-      uses: aws-actions/s3-sync@f2701ae75301088999913e7d758ec7d4dfbaf8d3 # v1.2.1
-      with:
-        bucket: mattermost-cloud-lambdas-${{ env.ENVIRONMENT }}
-        source-dir: ${{ env.LAMBDA_NAME }}/zip
-        destination-dir: ${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}
+    - name: Sync Lambda ZIP to S3
+      run: |
+        aws s3 sync \
+          "${{ env.LAMBDA_NAME }}/zip" \
+          "s3://mattermost-cloud-lambdas-${{ env.ENVIRONMENT }}/${{ env.LAMBDA_NAME }}/${{ steps.extract_branch.outputs.branch }}/${{ github.run_number }}"
+
 
