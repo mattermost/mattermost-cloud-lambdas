@@ -5,7 +5,7 @@ runs:
   using: composite
   steps:
     - name: Checkout
-      uses: actions/checkout@5126516654c75f76bca1de45dd82a3006d8890f9
+      uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2
 
     - name: Build ${{ env.LAMBDA_NAME }} zip
       shell: bash
