@@ -99,7 +99,9 @@ func handler(_ context.Context, event events.CloudWatchEvent) {
 		return
 	}
 	// Trigger manually to go over all RDS and create missing CloudWatchAlarms
-	listRDS()
+	if err := listRDS(); err != nil {
+		log.WithError(err).Errorln("Error listing RDS instances")
+	}
 }
 
 func createCloudWatchAlarm(dbClusterName string) error {

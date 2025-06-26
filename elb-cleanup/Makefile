@@ -5,7 +5,7 @@ GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
 GOARCH  ?= arm64
 GO_TEST_FLAGS ?= -race
-GOLANGCILINT_VER := v1.61.0
+GOLANGCILINT_VER := v1.64.8
 
 # Binary
 TAG ?= dev-local

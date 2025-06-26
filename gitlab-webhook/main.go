@@ -62,7 +62,9 @@ func handlePipelineEvent(webhookData PipelineEvent) {
 	log.Info("GitLab Webhook received...")
 	for _, build := range webhookData.Builds {
 		if build.Status == "manual" && build.Manual {
-			sendMattermostNotification(build.Name, fmt.Sprintf("Approve here: %s/-/jobs/%d", webhookData.Project.WebURL, build.ID))
+			if err := sendMattermostNotification(build.Name, fmt.Sprintf("Approve here: %s/-/jobs/%d", webhookData.Project.WebURL, build.ID)); err != nil {
+				log.WithError(err).Error("Failed to send Mattermost notification")
+			}
 			return
 		}
 	}

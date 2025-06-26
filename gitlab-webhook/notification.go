@@ -28,7 +28,9 @@ func send(webhookURL string, payload model.CommandResponse) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to send HTTP request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close() // Explicitly ignore close errors as main operation may have succeeded
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.Wrapf(err, "unexpected response status: %s", resp.Status)

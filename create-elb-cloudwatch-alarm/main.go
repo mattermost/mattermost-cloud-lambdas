@@ -142,7 +142,9 @@ func handler(_ context.Context, event events.CloudWatchEvent) {
 		return
 	}
 
-	listELBs()
+	if err := listELBs(); err != nil {
+		log.WithError(err).Errorln("Error listing ELBs")
+	}
 }
 
 func listELBs() error {
@@ -266,7 +268,7 @@ func getTargetGroup(loadBalancerArn string) (string, error) {
 		return "", err
 	}
 	if len(targetGroups.TargetGroups) == 0 {
-		return "", fmt.Errorf("No target groups found for lb %s", loadBalancerArn)
+		return "", fmt.Errorf("no target groups found for lb %s", loadBalancerArn)
 	}
 
 	targetGroupArn := *targetGroups.TargetGroups[0].TargetGroupArn

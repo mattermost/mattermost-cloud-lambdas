@@ -8,6 +8,7 @@ import (
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func send(webhookURL string, payload model.CommandResponse) error {
@@ -28,7 +29,11 @@ func send(webhookURL string, payload model.CommandResponse) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to send HTTP request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.WithError(closeErr).Error("Failed to close response body")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.Wrapf(err, "unexpected response status: %s", resp.Status)
