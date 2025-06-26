@@ -91,7 +91,7 @@ func handleClusterWebhook(payload *cloud.WebhookPayload) error {
 	}
 
 	if payload.Type != cloud.TypeCluster {
-		return fmt.Errorf("Unable to process payload type %s in 'handleClusterWebhook'", payload.Type)
+		return fmt.Errorf("unable to process payload type %s in 'handleClusterWebhook'", payload.Type)
 	}
 
 	attach := mmAttachment{
@@ -133,8 +133,12 @@ func handleClusterWebhook(payload *cloud.WebhookPayload) error {
 	}
 
 	if alert {
-		sendMattermostWebhook(mmWebhookAlert, mmPayload)
-		sendPagerDutyNotification(payload)
+		if err := sendMattermostWebhook(mmWebhookAlert, mmPayload); err != nil {
+			log.WithError(err).Error("Failed to send Mattermost alert webhook")
+		}
+		if err := sendPagerDutyNotification(payload); err != nil {
+			log.WithError(err).Error("Failed to send PagerDuty notification")
+		}
 	}
 
 	return sendMattermostWebhook(mmWebhook, mmPayload)
@@ -157,7 +161,7 @@ func handleInstallationWebhook(payload *cloud.WebhookPayload) error {
 	}
 
 	if payload.Type != cloud.TypeInstallation {
-		return fmt.Errorf("Unable to process payload type %s in 'handleInstallationWebhook'", payload.Type)
+		return fmt.Errorf("unable to process payload type %s in 'handleInstallationWebhook'", payload.Type)
 	}
 
 	attach := mmAttachment{
@@ -280,7 +284,11 @@ func sendMattermostWebhook(webhookURL string, payload mmSlashResponse) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.WithError(closeErr).Error("Failed to close response body")
+		}
+	}()
 
 	return nil
 }

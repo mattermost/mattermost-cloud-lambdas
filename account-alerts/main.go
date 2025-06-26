@@ -8,13 +8,14 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
-	"os"
-	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -104,7 +105,10 @@ func checkProvisioningSubnetIPLimits(envVars environmentVariables) error {
 		for _, subnet := range subnets.Subnets {
 			if *subnet.AvailableIpAddressCount < envVars.MinSubnetFreeIPs {
 				log.Infof("Subnet %s has low number of available IPs (%d)", *subnet.SubnetId, *subnet.AvailableIpAddressCount)
-				sendMattermostAlertNotification(fmt.Sprintf("Subnet %s has low number of available IPs (%d)", *subnet.SubnetId, *subnet.AvailableIpAddressCount), "VPC Subnets")
+				err := sendMattermostAlertNotification(fmt.Sprintf("Subnet %s has low number of available IPs (%d)", *subnet.SubnetId, *subnet.AvailableIpAddressCount), "VPC Subnets")
+				if err != nil {
+					log.WithError(err).Error("Failed to send Mattermost alert notification")
+				}
 			}
 		}
 	}

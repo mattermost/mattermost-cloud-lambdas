@@ -63,5 +63,7 @@ func send(webhookURL string, payload MMSlashResponse) {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close() // Explicitly ignore close errors in this panic-based error handling context
+	}()
 }

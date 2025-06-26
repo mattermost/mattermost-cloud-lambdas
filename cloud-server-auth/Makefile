@@ -2,7 +2,7 @@ HANDLER ?= bootstrap
 PACKAGE ?= $(HANDLER)
 GOOS    ?= linux
 GOARCH  ?= arm64
-GOLANGCILINT_VER := v1.61.0
+GOLANGCILINT_VER := v1.64.8
 
 export GO111MODULE=on
 
