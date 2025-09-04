@@ -104,6 +104,10 @@ func validateCloudRequest(config *Config, request events.APIGatewayProxyRequest)
 	if err != nil {
 		return processFailedAuth(config, request, http.StatusInternalServerError, err)
 	}
+
+	for key, value := range request.Headers {
+		cloudServerRequest.Header.Set(key, value)
+	}
 	cloudServerRequest.Header.Set("Accept-Encoding", "")
 
 	client := &http.Client{Timeout: 10 * time.Second}
