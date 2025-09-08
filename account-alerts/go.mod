@@ -1,25 +1,21 @@
 module github.com/mattermost/mattermost-cloud-lambdas/account-mattermost-alerts
 
-go 1.24.3
-
-toolchain go1.24.4
+go 1.24.5
 
 require (
 	github.com/aws/aws-lambda-go v1.49.0
-	github.com/aws/aws-sdk-go v1.55.7
-	github.com/mattermost/mattermost/server/public v0.1.15
+	github.com/aws/aws-sdk-go v1.55.8
+	github.com/mattermost/mattermost/server/public v0.1.17
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.7 // indirect
-	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
