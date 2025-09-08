@@ -1,33 +1,37 @@
+# Docs: https://golangci-lint.run/usage/configuration/#config-file
 
-linters:
-  disable-all: true
-  enable:
-    - revive
-    - gocyclo
-    - misspell
-    - gofmt
-    - gosimple
-    - govet
-    - ineffassign
-    - predeclared
-    - staticcheck
-    - unconvert
-    - unused
+# This version should be updated when updating golangci-lint version
+version: 2
 
-gocyclo:
-  min-complexity: 15
+run:
+  timeout: 5m
 
 issues:
-  exclude-use-default: false
-  exclude-dirs-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
 
 linters-settings:
+  gocyclo:
+    min-complexity: 15
   gofmt:
     simplify: true
   govet:
-    enable-all: true
+    enable:
+      - shadow
     disable:
       - fieldalignment
       - atomicalign
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - revive          # replacement for golint
+    - gocyclo         # cyclomatic complexity
+    - misspell        # spelling errors
+    - predeclared     # check for shadowing predeclared identifiers
+    - unconvert       # unnecessary conversions

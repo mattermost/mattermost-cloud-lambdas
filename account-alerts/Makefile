@@ -3,7 +3,7 @@ PACKAGE ?= $(HANDLER)
 GOPATH  ?= $(HOME)/go
 GOOS    ?= linux
 GOARCH  ?= arm64
-GOLANGCILINT_VER := v1.61.0
+GOLANGCILINT_VER := v1.64.8
 
 WORKDIR = $(CURDIR:$(GOPATH)%=/go%)
 ifeq ($(WORKDIR),$(CURDIR))

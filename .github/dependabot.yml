@@ -1,11 +1,10 @@
 version: 2
 updates:
+  # GitHub Actions dependency updates
   - package-ecosystem: "github-actions"
     directories: 
      - "/.github/workflows"
      - "/.github/actions/**/*"
-    reviewers:
-      - "mattermost/cloud-sre"
     open-pull-requests-limit: 5
     groups:
       Github Actions updates:
@@ -16,3 +15,220 @@ updates:
       day: "monday"
       time: "10:00"
       interval: "weekly"
+
+  # Go modules dependency updates for all lambda functions
+  - package-ecosystem: "gomod"
+    directory: "/account-alerts"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/alert-elb-cloudwatch-alarm"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/bind-server-network-attachment"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/cloud-server-auth"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/cloudwatch-event-alerts"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/create-elb-cloudwatch-alarm"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/create-rds-cloudwatch-alarm"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/deckhand"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/ebs-janitor"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/elb-cleanup"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/elrond-notification"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/gitlab-webhook"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/grafana-aws-metrics"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/grant-privileges-to-schemas"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/lambda-promtail"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/logs-to-opensearch"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/provisioner-notification"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
+    directory: "/rds-cluster-events"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"

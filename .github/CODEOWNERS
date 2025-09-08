@@ -1,0 +1,12 @@
+# Global code owners for the mattermost-cloud-lambdas repository
+# These owners will be requested for review when anyone opens a pull request.
+
+# Default owners for everything in the repo
+# Unless a later match takes precedence
+* @mattermost/cloud-sre
+
+# Specific ownership for GitHub workflows and actions
+/.github/ @mattermost/cloud-sre
+
+# Documentation
+*.md @mattermost/cloud-sre 

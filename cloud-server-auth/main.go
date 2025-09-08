@@ -115,7 +115,11 @@ func validateCloudRequest(config *Config, request events.APIGatewayProxyRequest)
 	if err != nil {
 		return processFailedAuth(config, request, http.StatusInternalServerError, errors.Wrap(err, "failed when making request to cloud server"))
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.WithError(closeErr).Error("Failed to close response body")
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

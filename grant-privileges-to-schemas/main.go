@@ -77,9 +77,10 @@ func GetSecret(secretName string) (string, error) {
 func getActivityDate() (int64, error) {
 	dateStr := os.Getenv("ACTIVITY_DATE")
 
-	if dateStr == "now" {
+	switch dateStr {
+	case "now":
 		dateStr = time.Now().Format("2006-01-02")
-	} else if dateStr == "" {
+	case "":
 		dateStr = "2020-09-01"
 	}
 
@@ -134,7 +135,11 @@ func fetchSchemasAndClusters(provisionerDB *sql.DB, activityDate int64) (map[str
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to query schemas: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			log.Printf("Failed to close rows: %v", closeErr)
+		}
+	}()
 
 	schemaToDB := make(map[string]string)  // Map schema name to logical database
 	dbToCluster := make(map[string]string) // Map logical database to RDS cluster ID
@@ -205,7 +210,11 @@ func Handler(_ context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to provisioner database: %w", err)
 	}
-	defer provisionerDB.Close()
+	defer func() {
+		if closeErr := provisionerDB.Close(); closeErr != nil {
+			log.Printf("Failed to close provisioner database: %v", closeErr)
+		}
+	}()
 
 	activityDate, err := getActivityDate()
 	if err != nil {
@@ -241,7 +250,11 @@ func Handler(_ context.Context) error {
 			log.Printf("Failed to connect to logical database %s: %v", logicalDatabase, err)
 			continue
 		}
-		defer db.Close()
+		defer func() {
+			if closeErr := db.Close(); closeErr != nil {
+				log.Printf("Failed to close database connection for %s: %v", logicalDatabase, closeErr)
+			}
+		}()
 
 		if err := applyPermissionsToDatabase(db, schemaToDB, logicalDatabase, cluster); err != nil {
 			log.Printf("Failed to apply permissions to database %s: %v", logicalDatabase, err)

@@ -11,12 +11,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/prometheus/common/model"
-	log "github.com/sirupsen/logrus"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/prometheus/common/model"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -29,7 +30,7 @@ const (
 
 	maxErrMsgLen = 1024
 
-	invalidExtraLabelsError = "Invalid value for environment variable EXTRA_LABELS. Expected a comma separated list with an even number of entries. "
+	invalidExtraLabelsError = "invalid value for environment variable EXTRA_LABELS. Expected a comma separated list with an even number of entries. "
 )
 
 var (

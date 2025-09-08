@@ -1,0 +1,171 @@
+name: Monthly Dependency Check
+
+on:
+  schedule:
+    # Run on the 1st of every month at 09:00 UTC
+    - cron: '0 9 1 * *'
+  workflow_dispatch:  # Allow manual execution
+
+jobs:
+  check-and-update-dependencies:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version: '1.24'
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Create unique branch name
+        id: branch
+        run: echo "branch_name=dependency-updates-${{ steps.date.outputs.date }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for dependency updates
+        id: check_updates
+        run: |
+          echo "Starting dependency analysis..."
+          
+          # Find all lambda directories with go.mod files
+          LAMBDA_DIRS=$(find . -name "go.mod" -type f | sed 's|/go.mod||' | sed 's|^./||' | sort)
+          
+          echo "=== Lambda Functions Found ==="
+          echo "$LAMBDA_DIRS"
+          echo "============================="
+          
+          # Initialize update tracking
+          UPDATES_AVAILABLE=false
+          UPDATE_SUMMARY=""
+          
+          for dir in $LAMBDA_DIRS; do
+            echo "Checking dependencies in $dir..."
+            cd "$dir"
+            
+            # Check if dependencies need updates
+            if go list -u -m all | grep -E '\[.*\]$' >/dev/null 2>&1; then
+              echo "Updates available in $dir"
+              UPDATES_AVAILABLE=true
+              
+              # Get list of updates
+              UPDATES=$(go list -u -m all | grep -E '\[.*\]$' | head -10)
+              UPDATE_SUMMARY="${UPDATE_SUMMARY}\n\n**${dir}:**\n\`\`\`\n${UPDATES}\n\`\`\`"
+            else
+              echo "No updates needed in $dir"
+            fi
+            
+            cd - >/dev/null
+          done
+          
+          echo "updates_available=${UPDATES_AVAILABLE}" >> $GITHUB_OUTPUT
+          
+          # Save update summary to GitHub outputs (act-compatible)
+          {
+            echo 'update_summary<<EOF'
+            echo -e "$UPDATE_SUMMARY"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Update dependencies
+        if: steps.check_updates.outputs.updates_available == 'true'
+        run: |
+          # Create new branch for updates
+          git checkout -b "${{ steps.branch.outputs.branch_name }}"
+          
+          # Find all lambda directories with go.mod files
+          LAMBDA_DIRS=$(find . -name "go.mod" -type f | sed 's|/go.mod||' | sed 's|^./||' | sort)
+          
+          for dir in $LAMBDA_DIRS; do
+            echo "Updating dependencies in $dir..."
+            cd "$dir"
+            
+            # Update all dependencies
+            go get -u ./...
+            go mod tidy
+            
+            cd - >/dev/null
+          done
+          
+          # Check if there are any changes
+          if git diff --quiet; then
+            echo "No changes after update - this shouldn't happen but handling gracefully"
+            exit 0
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_updates.outputs.updates_available == 'true'
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch.outputs.branch_name }}
+          title: "🤖 Monthly Dependency Updates - ${{ steps.date.outputs.date }}"
+          body: |
+            # 🤖 Automated Monthly Dependency Updates
+            
+            This PR contains automated dependency updates for all Lambda functions in the repository.
+            
+            ## 📋 Summary
+            
+            - **Generated**: ${{ steps.date.outputs.date }}
+            - **Workflow**: Monthly Dependency Check
+            - **Lambda Functions**: Updated all Go modules
+            
+            ## 📊 Dependencies Updated
+            
+            ${{ steps.check_updates.outputs.update_summary }}
+            
+            ## 🔍 What was done:
+            
+            1. ✅ Analyzed all Lambda function directories for dependency updates
+            2. ✅ Updated Go modules using `go get -u ./...`
+            3. ✅ Cleaned up dependencies with `go mod tidy`
+            4. ✅ Created this PR with all changes
+            
+            ## 🚀 Next Steps
+            
+            1. **Review** the changes in each Lambda function
+            2. **Test** critical Lambda functions if needed
+            3. **Merge** if all looks good
+            4. **Deploy** updated Lambdas through normal deployment process
+            
+            ## 📝 Notes
+            
+            - All updates are for **minor and patch versions** only
+            - Major version updates require manual review
+            - Security updates are handled separately by Dependabot
+            
+            ---
+            
+            🔗 **Related**: This PR is generated by the monthly dependency check workflow.
+            
+            /cc @mattermost/cloud-sre
+          commit-message: |
+            🤖 Monthly dependency updates for Lambda functions
+            
+            - Updated Go modules for all Lambda functions
+            - Applied go mod tidy to clean up dependencies
+            - Generated on ${{ steps.date.outputs.date }}
+          assignees: mattermost/cloud-sre
+          draft: false
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.check_updates.outputs.updates_available }}" == "true" ]; then
+            echo "✅ Dependency updates were found and a PR has been created"
+          else
+            echo "ℹ️ No dependency updates were needed at this time"
+          fi 

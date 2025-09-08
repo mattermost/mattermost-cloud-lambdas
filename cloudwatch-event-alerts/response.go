@@ -3,8 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 // MMField represents a single field in a Mattermost message attachment.
@@ -68,5 +69,7 @@ func send(webhookURL string, payload MMSlashResponse) {
 	if err != nil {
 		panic(errors.Wrap(err, "failed to send HTTP request"))
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close() // Explicitly ignore close errors in this panic-based error handling context
+	}()
 }
