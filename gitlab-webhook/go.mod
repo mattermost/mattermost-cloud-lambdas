@@ -1,10 +1,10 @@
 module github.com/mattermost/mattermost-cloud-lambdas/gitlab-webhook
 
-go 1.24.5
+go 1.24.6
 
 require (
 	github.com/aws/aws-lambda-go v1.49.0
-	github.com/mattermost/mattermost/server/public v0.1.19
+	github.com/mattermost/mattermost/server/public v0.1.20
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 )
