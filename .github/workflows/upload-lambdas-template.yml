@@ -47,10 +47,13 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
       - name: Debug Role ARN
+        env:
+          ENVIRONMENT_INPUT: ${{ inputs.environment }}
+          AWS_ACCOUNT_ID_INPUT: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
-          echo "AWS Account ID: ${{ secrets.AWS_ACCOUNT_ID }}"
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Role ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/mattermost-cloud-lambdas-upload-${{ inputs.environment }}-lambda-role"
+          echo "AWS Account ID: $AWS_ACCOUNT_ID_INPUT"
+          echo "Environment: $ENVIRONMENT_INPUT"
+          echo "Role ARN: arn:aws:iam::$AWS_ACCOUNT_ID_INPUT:role/mattermost-cloud-lambdas-upload-$ENVIRONMENT_INPUT-lambda-role"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838
