@@ -18,12 +18,14 @@ jobs:
       environments: ${{ steps.set-environments.outputs.environments }}
     steps:
       - id: set-environments
+        env:
+          ENVIRONMENTS_INPUT: ${{ github.event.inputs.environments }}
         run: |
           if [[ "${{ github.event_name }}" == "push" ]]; then
             echo 'environments=["dev", "test", "core", "shared-services", "data-engineering", "prod"]' >> $GITHUB_OUTPUT
           else
             # Convert comma-separated string to JSON array
-            IFS=',' read -ra ENV_ARRAY <<< "${{ github.event.inputs.environments }}"
+            IFS=',' read -ra ENV_ARRAY <<< "$ENVIRONMENTS_INPUT"
             JSON_ARRAY=$(printf '"%s",' "${ENV_ARRAY[@]}" | sed 's/,$//')
             echo "environments=[$JSON_ARRAY]" >> $GITHUB_OUTPUT
           fi
