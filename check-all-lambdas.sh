@@ -31,6 +31,7 @@ LAMBDA_DIRS=(
     "ebs-janitor"
     "elb-cleanup"
     "elrond-notification"
+    "github-cursor-webhook"
     "gitlab-webhook"
     "grafana-aws-metrics"
     "grant-privileges-to-schemas"
