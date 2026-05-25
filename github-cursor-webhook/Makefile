@@ -62,4 +62,4 @@ check-style: lint fmt
 lint-install:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCILINT_VER)
 
-.PHONY: all build pack clean update-modules
+.PHONY: all build pack clean update-modules fmt lint check-style lint-install
