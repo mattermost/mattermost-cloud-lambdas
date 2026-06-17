@@ -4,10 +4,10 @@ go 1.24.0
 
 require (
 	github.com/PagerDuty/go-pagerduty v1.8.0
-	github.com/aws/aws-lambda-go v1.49.0
-	github.com/mattermost/mattermost-cloud v0.92.0
+	github.com/aws/aws-lambda-go v1.54.0
+	github.com/mattermost/mattermost-cloud v0.93.6
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 )
 
 require (
@@ -31,7 +31,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
-	github.com/mattermost/mattermost-operator v1.24.0-rc.1 // indirect
+	github.com/mattermost/mattermost-operator v1.24.0 // indirect
 	github.com/mattermost/rotator v0.2.1-0.20230830064954-61490ed26761 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
