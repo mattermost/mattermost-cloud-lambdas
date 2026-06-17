@@ -3,9 +3,9 @@ module github.com/mattermost/mattermost-cloud-lambdas/grant-privileges-to-schema
 go 1.23.2
 
 require (
-	github.com/aws/aws-lambda-go v1.49.0
+	github.com/aws/aws-lambda-go v1.54.0
 	github.com/aws/aws-sdk-go v1.55.8
-	github.com/lib/pq v1.10.9
+	github.com/lib/pq v1.12.3
 )
 
 require github.com/jmespath/go-jmespath v0.4.0 // indirect
