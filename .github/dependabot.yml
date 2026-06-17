@@ -150,6 +150,18 @@ updates:
           - "patch"
 
   - package-ecosystem: "gomod"
+    directory: "/github-cursor-webhook"
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "daily"
+    groups:
+      go-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "gomod"
     directory: "/gitlab-webhook"
     open-pull-requests-limit: 3
     schedule:

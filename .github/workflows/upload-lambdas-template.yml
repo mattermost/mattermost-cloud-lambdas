@@ -38,6 +38,7 @@ jobs:
           - rds-cluster-events
           - cloudwatch-event-alerts
           - elrond-notification
+          - github-cursor-webhook
           - gitlab-webhook
           - provisioner-notification
           - grant-privileges-to-schemas
