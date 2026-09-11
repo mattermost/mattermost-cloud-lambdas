@@ -43,6 +43,7 @@ const (
 	envGitHubWebhookSecret = "GITHUB_WEBHOOK_SECRET"
 	envN8NAPIKey           = "N8N_API_KEY"
 	envForwardTimeoutMS    = "FORWARD_TIMEOUT_MS"
+	envLogLevel            = "LOG_LEVEL"
 
 	defaultForwardTimeout = 10 * time.Second
 
@@ -81,14 +82,36 @@ func main() {
 	})
 }
 
+// initLogging configures structured logging. The level comes from LOG_LEVEL so
+// it can be raised without a code change or redeploy of the binary.
+//
+// This previously inferred the level from AWS_EXECUTION_ENV being empty, on the
+// assumption that variable is unset outside Lambda. It is in fact set for the
+// provided.al2 runtime too, so the level always resolved to Info in Lambda and
+// every debug line was silently dropped in production - which hid the filtered
+// path, the single most common outcome, from anyone trying to confirm that
+// deliveries were arriving at all.
 func initLogging() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-	if os.Getenv("AWS_EXECUTION_ENV") == "" {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
+	log.SetLevel(logLevel(os.Getenv(envLogLevel)))
+}
+
+// logLevel resolves a LOG_LEVEL value, falling back to Info when it is empty or
+// unparseable. An invalid value must not silence logging entirely, so it is
+// reported rather than swallowed.
+func logLevel(raw string) log.Level {
+	if raw == "" {
+		return log.InfoLevel
 	}
+
+	level, err := log.ParseLevel(raw)
+	if err != nil {
+		log.WithField(envLogLevel, raw).Warn("Unrecognised log level, defaulting to info")
+		return log.InfoLevel
+	}
+
+	return level
 }
 
 func loadConfig() (*Config, error) {
@@ -152,6 +175,7 @@ func handler(ctx context.Context, config *Config, client *http.Client, request e
 	}
 
 	if len(body) == 0 {
+		logger.Warn("Rejecting webhook: empty request body")
 		return jsonResponse(http.StatusBadRequest, map[string]string{"error": "empty request body"}), nil
 	}
 
@@ -162,7 +186,11 @@ func handler(ctx context.Context, config *Config, client *http.Client, request e
 	}
 
 	if !shouldForward(&payload) {
-		logger.Debug("Filtered webhook: does not match downstream workflow conditions")
+		// Info, not Debug: filtering is the expected outcome for most deliveries,
+		// so this is the line that tells an operator the endpoint is reachable and
+		// authenticating correctly. At Debug it left a successful delivery
+		// indistinguishable from one that never arrived.
+		logger.Info("Filtered webhook: does not match downstream workflow conditions")
 		return jsonResponse(http.StatusOK, map[string]string{"status": "filtered"}), nil
 	}
 
